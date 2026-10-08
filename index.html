@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Sistem Input Dokumen ISO UPNVJ</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
+</head>
+<body>
+
+<div class="login-wrapper">
+
+  <!-- LEFT PANEL - FORM -->
+  <div class="login-left">
+    
+    <div class="login-brand">
+      <img src="assets/img/logo-upn.png" alt="Logo UPNVJ">
+      <div class="login-brand-text">
+        Sistem Input Dokumen ISO
+        <small>UPN "Veteran" Jakarta</small>
+      </div>
+    </div>
+    
+    <div class="login-form-container">
+      
+      <div class="welcome-banner">
+        <div class="welcome-banner-content">
+          <h1>Selamat datang 👋</h1>
+          <p>Silakan login dengan email UPNVJ Anda untuk melanjutkan</p>
+          <div class="welcome-banner-accent"></div>
+        </div>
+      </div>
+      
+      <div id="g_id_signin_container" class="google-btn-container"></div>
+      
+      <div class="login-info">
+        <span class="login-info-icon">🔒</span>
+        <div>
+          Login hanya untuk email <strong>@upnvj.ac.id</strong> yang sudah terdaftar oleh admin ISO.
+        </div>
+      </div>
+      
+      <div id="message" class="login-message"></div>
+      
+    </div>
+    
+    <div class="login-footer">
+      <div class="credit">
+        Created by <strong>Pusat Sertifikasi dan Akreditasi Internasional LPMPP</strong>
+      </div>
+      <div>© 2026 UPN "Veteran" Jakarta. All rights reserved.</div>
+    </div>
+    
+  </div>
+
+  <!-- RIGHT PANEL - BRANDING -->
+  <div class="login-right">
+    <div class="login-right-content">
+      
+      <div class="preview-card">
+        <div class="preview-card-header">
+          <img src="assets/img/logo-upn.png" alt="UPNVJ">
+          <div class="preview-card-title">ISO UPNVJ 2026</div>
+        </div>
+        
+        <div class="preview-stats">
+          <div class="preview-stat">
+            <div class="preview-stat-value">45</div>
+            <div class="preview-stat-label">Tersedia</div>
+          </div>
+          <div class="preview-stat">
+            <div class="preview-stat-value">2</div>
+            <div class="preview-stat-label">Draft</div>
+          </div>
+          <div class="preview-stat">
+            <div class="preview-stat-value">89%</div>
+            <div class="preview-stat-label">Progress</div>
+          </div>
+        </div>
+        
+        <div class="preview-progress-label">
+          <span>Kelengkapan Dokumen</span>
+          <span>89%</span>
+        </div>
+        <div class="preview-progress-bar">
+          <div class="preview-progress-fill"></div>
+        </div>
+      </div>
+      
+      <div class="login-tagline">
+        <h2>Sistem Terintegrasi untuk <span class="login-tagline-highlight">Akreditasi ISO</span> UPNVJ</h2>
+        <p>Kelola dokumen ISO setiap program studi dalam satu platform terpadu — mudah, cepat, dan transparan.</p>
+      </div>
+      
+    </div>
+  </div>
+
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/auth.js"></script>
+
+<script>
+  window.addEventListener('load', function() {
+    if (typeof google === 'undefined' || !google.accounts) {
+      document.getElementById('message').innerHTML =
+        '<div class="alert alert-error">⚠️ Google Sign-In gagal dimuat. Periksa koneksi internet Anda.</div>';
+      return;
+    }
+    
+    google.accounts.id.initialize({
+      client_id: APP_CONFIG.CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+    
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin_container'),
+      { 
+        theme: 'outline', 
+        size: 'large', 
+        text: 'signin_with', 
+        shape: 'rectangular',
+        width: 320,
+        logo_alignment: 'left'
+      }
+    );
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelola User - ISO UPNVJ</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      margin-bottom: 20px;
+      color: #111827;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+  <div class="container">
+    <div class="navbar-brand">
+      👥 Kelola User
+    </div>
+    <div class="navbar-user">
+      <a href="dashboard.html" style="color:white;text-decoration:none;opacity:0.9;font-size:14px;">Dashboard</a>
+      <a href="rekap.html" style="color:white;text-decoration:none;opacity:0.9;font-size:14px;">Rekap</a>
+      <span id="user-info">Memuat...</span>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-container">
+
+  <div class="card">
+    <div class="card-header">
+      <h2>👥 Daftar User</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="loadUsers(true)">🔄 Refresh</button>
+        <button class="btn btn-primary" onclick="openModal()">➕ Tambah User</button>
+</div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filters">
+      <label>Cari:</label>
+      <input type="text" id="filter-search" placeholder="Cari nama atau email..." oninput="renderUsers()" style="flex:1;min-width:200px;">
+      <label>Role:</label>
+      <select id="filter-role" onchange="renderUsers()">
+        <option value="">Semua Role</option>
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+        <option value="auditor">Auditor</option>
+      </select>
+      <label>Status:</label>
+      <select id="filter-status" onchange="renderUsers()">
+        <option value="">Semua Status</option>
+        <option value="aktif">Aktif</option>
+        <option value="nonaktif">Nonaktif</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper" id="table-container">
+      <div class="loading">
+        <span class="spinner"></span> Memuat data user...
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Form -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Tambah User Baru</h3>
+    
+    <input type="hidden" id="form-is-edit" value="false">
+    
+    <div class="form-group">
+      <label>Email <span style="color:#dc2626;">*</span></label>
+      <input type="email" id="form-email" placeholder="nama@upnvj.ac.id">
+      <div class="form-hint">Harus email @upnvj.ac.id</div>
+    </div>
+    
+    <div class="form-group">
+      <label>Nama Lengkap <span style="color:#dc2626;">*</span></label>
+      <input type="text" id="form-nama" placeholder="Nama lengkap user">
+    </div>
+    
+    <div class="form-group">
+      <label>Role <span style="color:#dc2626;">*</span></label>
+      <select id="form-role">
+        <option value="user">User (hanya input prodi sendiri)</option>
+        <option value="admin">Admin (akses penuh)</option>
+        <option value="auditor">Auditor (read-only)</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>Subsatker <span style="color:#dc2626;">*</span></label>
+      <select id="form-subsatker">
+        <option value="">-- Pilih Subsatker --</option>
+      </select>
+      <div class="form-hint">Pilih "ALL" untuk admin/auditor yang akses semua</div>
+    </div>
+    
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="form-aktif" checked style="width:auto;margin-right:8px;">
+        Aktif (bisa login)
+      </label>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="saveUser()" id="btn-save">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/manage-user.js"></script>
+
+</body>
+</html>

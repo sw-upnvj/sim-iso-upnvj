@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Sistem Input Dokumen ISO UPNVJ</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="assets/img/logo-upn.png" alt="UPNVJ">
+        <div class="sidebar-brand-text">
+          ISO UPNVJ
+          <small>Sistem Input Dokumen</small>
+        </div>
+      </div>
+    </div>
+    
+    <nav class="sidebar-menu">
+      <div class="sidebar-section-title">Menu Utama</div>
+      <a href="dashboard.html" class="active">
+        <span class="sidebar-menu-icon">🏠</span>
+        Dashboard
+      </a>
+      <a href="dashboard.html">
+        <span class="sidebar-menu-icon">📋</span>
+        Dokumen
+      </a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
+      <a href="rekap.html">
+        <span class="sidebar-menu-icon">📊</span>
+        Rekap
+      </a>
+      <a href="manage-user.html" id="sidebar-manage-user" style="display:none;">
+        <span class="sidebar-menu-icon">👥</span>
+        Kelola User
+      </a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Sistem</div>
+      <a href="#" onclick="logout();return false;">
+        <span class="sidebar-menu-icon">🚪</span>
+        Logout
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      Created by <strong>Pusat Sertifikasi dan Akreditasi Internasional LPMPP</strong>
+      <div style="margin-top:6px;">© 2026 UPN "Veteran" Jakarta</div>
+    </div>
+  </aside>
+  
+  <!-- ===== MAIN AREA ===== -->
+  <main class="main-area">
+    
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-page-title">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-info-name" id="user-name">Memuat...</div>
+            <div class="user-info-role" id="user-role">-</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="content">
+      
+      <!-- Welcome Card -->
+      <div class="welcome-card">
+        <div class="welcome-card-content">
+          <h2>Selamat datang, <span id="welcome-name">User</span>! 👋</h2>
+          <p id="welcome-subtitle">Silakan lengkapi dokumen ISO di bawah ini</p>
+        </div>
+      </div>
+      
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon green">📄</div>
+          </div>
+          <div class="stat-card-value" id="stat-total">0</div>
+          <div class="stat-card-label">Total Dokumen</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon mint">✅</div>
+          </div>
+          <div class="stat-card-value" id="stat-tersedia">0</div>
+          <div class="stat-card-label">Tersedia</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon amber">⏳</div>
+          </div>
+          <div class="stat-card-value" id="stat-kosong">0</div>
+          <div class="stat-card-label">Belum Diisi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon lime">📊</div>
+          </div>
+          <div class="stat-card-value" id="stat-progress">0%</div>
+          <div class="stat-card-label">Progress</div>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="progress-card">
+        <div class="progress-card-header">
+          <div class="progress-card-title">Progress Kelengkapan Dokumen</div>
+          <div class="progress-card-value" id="progress-value">0%</div>
+        </div>
+        <div class="progress-bar-large">
+          <div class="progress-fill-large" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      
+      <!-- Table Card -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <div class="table-card-title">📁 Daftar Dokumen</div>
+          <div class="table-filters">
+            <select id="filter-subsatker" onchange="onSubsatkerChange()" style="display:none;">
+              <option value="">-- Pilih Subsatker --</option>
+            </select>
+            <select id="filter-kategori" onchange="renderDocs()">
+              <option value="">Semua Kategori</option>
+              <option value="A">Kategori A (70%)</option>
+              <option value="B">Kategori B (30%)</option>
+            </select>
+            <select id="filter-status" onchange="renderDocs()">
+              <option value="">Semua Status</option>
+              <option value="tersedia">✅ Tersedia</option>
+              <option value="kosong">❌ Belum Diisi</option>
+            </select>
+            <input type="text" id="filter-search" placeholder="Cari dokumen..." oninput="renderDocs()">
+          </div>
+        </div>
+        
+        <div class="table-wrapper" id="table-container">
+          <div class="loading">
+            <span class="spinner"></span> Memuat data...
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+  </main>
+  
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/dashboard.js"></script>
+
+</body>
+</html>

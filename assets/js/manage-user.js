@@ -12,8 +12,8 @@ window.addEventListener('load', async () => {
   
   currentUser = session.user;
   
-  if (currentUser.role !== 'admin') {
-    alert('Akses ditolak. Hanya admin.');
+  if (currentUser.role !== 'administrator') {
+    alert('Akses ditolak. Hanya administrator.');
     window.location.href = 'dashboard.html';
     return;
   }
@@ -24,11 +24,29 @@ window.addEventListener('load', async () => {
 });
 
 function renderUserInfo() {
-  const el = document.getElementById('user-info');
-  el.innerHTML = `
-    <span style="opacity:0.9;">${escapeHtml(currentUser.nama)}</span>
-    <span style="opacity:0.7;font-size:12px;"> • ${escapeHtml(currentUser.role)}</span>
-  `;
+  document.getElementById('user-name').textContent = currentUser.nama;
+  document.getElementById('user-role').textContent = currentUser.role;
+  
+  const initials = currentUser.nama
+    .split(' ')
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase();
+  document.getElementById('user-avatar').textContent = initials;
+  
+  // Tampilkan menu admin
+  const elManage = document.getElementById('sidebar-manage-user');
+  if (elManage) elManage.style.display = 'flex';
+  
+  const elRtl = document.getElementById('sidebar-manage-rtl');
+  if (elRtl) elRtl.style.display = 'flex';
+  
+  const elVerif = document.getElementById('sidebar-verifikasi');
+  if (elVerif) elVerif.style.display = 'flex';
+  
+  const elAudit = document.getElementById('sidebar-audit');
+  if (elAudit) elAudit.style.display = 'flex';
 }
 
 async function loadSubsatkerList() {
@@ -46,13 +64,9 @@ async function loadSubsatkerList() {
   });
 }
 
-// ============================================
-// LOAD USERS DENGAN CACHE
-// ============================================
 async function loadUsers(forceRefresh = false) {
   const container = document.getElementById('table-container');
   
-  // Cek cache dulu (kecuali force refresh)
   const cached = !forceRefresh ? getUsersCache() : null;
   if (cached) {
     allUsers = cached;
@@ -74,13 +88,12 @@ async function loadUsers(forceRefresh = false) {
   renderUsers();
 }
 
-// ===== Cache Management =====
 function getUsersCache() {
   try {
     const cached = localStorage.getItem('users_cache');
     if (!cached) return null;
     const { data, timestamp } = JSON.parse(cached);
-    if (Date.now() - timestamp > 5 * 60 * 1000) {  // 5 menit
+    if (Date.now() - timestamp > 5 * 60 * 1000) {
       localStorage.removeItem('users_cache');
       return null;
     }
@@ -105,9 +118,6 @@ function clearUsersCache() {
   localStorage.removeItem('users_cache');
 }
 
-// ============================================
-// RENDER TABEL USER
-// ============================================
 function renderUsers() {
   const container = document.getElementById('table-container');
   
@@ -152,7 +162,7 @@ function renderUsers() {
           <th style="width:50px;">No</th>
           <th>Nama</th>
           <th>Email</th>
-          <th style="width:100px;">Role</th>
+          <th style="width:120px;">Role</th>
           <th>Subsatker</th>
           <th style="width:90px;">Status</th>
           <th style="width:140px;">Aksi</th>
@@ -163,13 +173,13 @@ function renderUsers() {
   
   filtered.forEach((u, index) => {
     const roleBadge = u.role === 'administrator' 
-     ? '<span class="badge badge-danger">Administrator</span>'
-        : u.role === 'verifikator'
+      ? '<span class="badge badge-danger">Administrator</span>'
+      : u.role === 'verifikator'
         ? '<span class="badge badge-info">Verifikator</span>'
         : u.role === 'auditor'
-        ? '<span class="badge badge-warning">Auditor</span>'
-        : '<span class="badge" style="background:#D1FAE5;color:#065F46;">Auditee</span>';
-
+          ? '<span class="badge badge-warning">Auditor</span>'
+          : '<span class="badge" style="background:#D1FAE5;color:#065F46;">Auditee</span>';
+    
     const statusBadge = u.aktif
       ? '<span class="badge badge-success">✅ Aktif</span>'
       : '<span class="badge badge-gray">⛔ Nonaktif</span>';
@@ -196,16 +206,13 @@ function renderUsers() {
   container.innerHTML = html;
 }
 
-// ============================================
-// MODAL
-// ============================================
 function openModal() {
   document.getElementById('modal-title').textContent = 'Tambah User Baru';
   document.getElementById('form-is-edit').value = 'false';
   document.getElementById('form-email').value = '';
   document.getElementById('form-email').disabled = false;
   document.getElementById('form-nama').value = '';
-  document.getElementById('form-role').value = 'user';
+  document.getElementById('form-role').value = 'auditee';
   document.getElementById('form-subsatker').value = '';
   document.getElementById('form-aktif').checked = true;
   document.getElementById('modal-overlay').classList.add('show');
@@ -230,9 +237,6 @@ function editUser(email) {
   document.getElementById('modal-overlay').classList.add('show');
 }
 
-// ============================================
-// SAVE USER (dengan clear cache)
-// ============================================
 async function saveUser() {
   const btn = document.getElementById('btn-save');
   btn.disabled = true;
@@ -262,16 +266,13 @@ async function saveUser() {
   if (result.success) {
     showToast('✅ ' + result.message);
     closeModal();
-    clearUsersCache();          // Clear cache karena data berubah
-    await loadUsers(true);      // Force refresh
+    clearUsersCache();
+    await loadUsers(true);
   } else {
     showToast('❌ ' + result.message, 'error');
   }
 }
 
-// ============================================
-// DELETE USER (dengan clear cache)
-// ============================================
 async function confirmDelete(email, nama) {
   if (!confirm(`Yakin ingin menghapus user:\n\n${nama}\n(${email})\n\nAksi ini tidak bisa dibatalkan.`)) return;
   
@@ -279,8 +280,8 @@ async function confirmDelete(email, nama) {
   
   if (result.success) {
     showToast('✅ User berhasil dihapus');
-    clearUsersCache();          // Clear cache karena data berubah
-    await loadUsers(true);      // Force refresh
+    clearUsersCache();
+    await loadUsers(true);
   } else {
     showToast('❌ ' + result.message, 'error');
   }
@@ -292,7 +293,6 @@ function logout() {
   window.location.href = 'index.html';
 }
 
-// Close modal kalau klik overlay
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
   if (e.target.id === 'modal-overlay') closeModal();
 });

@@ -12,7 +12,6 @@ window.addEventListener('load', async () => {
   
   currentUser = session.user;
   
-  // Cek akses
   if (currentUser.role !== 'verifikator' && currentUser.role !== 'administrator') {
     alert('Akses ditolak. Halaman ini hanya untuk verifikator & administrator.');
     window.location.href = 'dashboard.html';
@@ -35,10 +34,11 @@ function renderUserInfo() {
     .toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   
-  // Tampilkan menu untuk role terkait
   if (currentUser.role === 'administrator') {
-    document.getElementById('sidebar-manage-user').style.display = 'flex';
-    document.getElementById('sidebar-audit').style.display = 'flex';
+    const el = document.getElementById('sidebar-manage-user');
+    if (el) el.style.display = 'flex';
+    const elAudit = document.getElementById('sidebar-audit');
+    if (elAudit) elAudit.style.display = 'flex';
   }
 }
 
@@ -55,12 +55,8 @@ async function loadDocs(forceRefresh = false) {
   
   allDocs = result.data || [];
   
-  // Populate dropdown subsatker
   populateSubsatkerFilter();
-  
-  // Update stats
-  updateStats();
-  
+  updateStats(result.stats);
   renderDocs();
 }
 
@@ -68,10 +64,8 @@ function populateSubsatkerFilter() {
   const select = document.getElementById('filter-subsatker');
   const currentValue = select.value;
   
-  // Kumpulkan subsatker unik
   const unique = [...new Set(allDocs.map(d => d.subsatker))].sort();
   
-  // Reset
   select.innerHTML = '<option value="">Semua Subsatker</option>';
   unique.forEach(s => {
     const opt = document.createElement('option');
@@ -80,25 +74,23 @@ function populateSubsatkerFilter() {
     select.appendChild(opt);
   });
   
-  // Restore value
   if (currentValue) select.value = currentValue;
 }
 
-function updateStats() {
-  const submitted = allDocs.filter(d => d.status === 'submitted').length;
-  const rejected = allDocs.filter(d => d.status === 'rejected').length;
+function updateStats(stats) {
+  if (!stats) {
+    // Fallback
+    document.getElementById('stat-submitted').textContent = allDocs.length;
+    document.getElementById('stat-verified').textContent = '—';
+    document.getElementById('stat-rejected').textContent = '—';
+    document.getElementById('stat-progress').textContent = '0%';
+    return;
+  }
   
-  // Verified: hitung dari submission yang status verified untuk subsatker ini
-  // Tapi karena getDocsForVerification hanya kirim submitted & rejected,
-  // kita tampilkan verified = 0 (tidak dalam scope)
-  
-  document.getElementById('stat-submitted').textContent = submitted;
-  document.getElementById('stat-verified').textContent = '-'; // placeholder
-  document.getElementById('stat-rejected').textContent = rejected;
-  
-  const total = submitted + rejected;
-  const progress = total > 0 ? Math.round((submitted / total) * 100) : 0;
-  document.getElementById('stat-progress').textContent = progress + '%';
+  document.getElementById('stat-submitted').textContent = stats.menunggu || 0;
+  document.getElementById('stat-verified').textContent = stats.verified || 0;
+  document.getElementById('stat-rejected').textContent = stats.ditolak || 0;
+  document.getElementById('stat-progress').textContent = (stats.progress || 0) + '%';
 }
 
 function renderDocs() {

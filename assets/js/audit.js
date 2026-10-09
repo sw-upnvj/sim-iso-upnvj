@@ -1,5 +1,5 @@
 // ============================================
-// audit.js - Logic halaman auditor (Section A/B/C)
+// audit.js - Logic halaman auditor (Section A/B)
 // ============================================
 
 let currentUser = null;
@@ -40,6 +40,8 @@ function renderUserInfo() {
     if (el) el.style.display = 'flex';
     const elVerif = document.getElementById('sidebar-verifikasi');
     if (elVerif) elVerif.style.display = 'flex';
+    const elRtl = document.getElementById('sidebar-manage-rtl');
+    if (elRtl) elRtl.style.display = 'flex';
   }
 }
 
@@ -48,6 +50,7 @@ function renderUserInfo() {
 // ============================================
 async function loadProdiList(forceRefresh = false) {
   const container = document.getElementById('prodi-container');
+  if (!container) return;
   container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat daftar prodi...</div>';
   
   const result = await callAPI('getAllProdiForAudit');
@@ -59,7 +62,6 @@ async function loadProdiList(forceRefresh = false) {
   
   allProdi = result.data || [];
   
-  // Update stats
   const totalProdi = allProdi.length;
   const rtlCount = allProdi.filter(p => p.hasRtl).length;
   const avgSkor = totalProdi > 0 
@@ -67,19 +69,25 @@ async function loadProdiList(forceRefresh = false) {
     : 0;
   const prodi100 = allProdi.filter(p => p.skor === 100).length;
   
-  document.getElementById('stat-total-prodi').textContent = totalProdi;
-  document.getElementById('stat-rtl').textContent = rtlCount;
-  document.getElementById('stat-avg-skor').textContent = avgSkor + '%';
-  document.getElementById('stat-100').textContent = prodi100;
+  const elTotalProdi = document.getElementById('stat-total-prodi');
+  const elRtl = document.getElementById('stat-rtl');
+  const elAvg = document.getElementById('stat-avg-skor');
+  const el100 = document.getElementById('stat-100');
+  
+  if (elTotalProdi) elTotalProdi.textContent = totalProdi;
+  if (elRtl) elRtl.textContent = rtlCount;
+  if (elAvg) elAvg.textContent = avgSkor + '%';
+  if (el100) el100.textContent = prodi100;
   
   renderProdi();
 }
 
 function renderProdi() {
   const container = document.getElementById('prodi-container');
+  if (!container) return;
   
-  const searchFilter = document.getElementById('filter-search').value.toLowerCase();
-  const rtlFilter = document.getElementById('filter-rtl').value;
+  const searchFilter = document.getElementById('filter-search')?.value.toLowerCase() || '';
+  const rtlFilter = document.getElementById('filter-rtl')?.value || '';
   
   let filtered = allProdi.filter(p => {
     if (searchFilter && !p.subsatker.toLowerCase().includes(searchFilter)) return false;
@@ -135,20 +143,17 @@ function renderProdi() {
 async function openAudit(subsatker) {
   currentProdi = subsatker;
   
-  // Switch section
   document.getElementById('section-a').style.display = 'none';
   document.getElementById('section-b').style.display = 'block';
-  document.getElementById('section-c').style.display = 'none';
   document.getElementById('page-title').textContent = 'Audit: ' + subsatker;
   
   document.getElementById('audit-title').textContent = '🔍 Audit: ' + subsatker;
-  document.getElementById('audit-subtitle').textContent = 'Cek setiap dokumen & berikan catatan auditor';
+  document.getElementById('audit-subtitle').textContent = 'Review RTL 2025 & audit dokumen ISO 2026';
   
-  // Load docs
   const container = document.getElementById('audit-docs-container');
-  container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat dokumen...</div>';
+  container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat detail...</div>';
   
-  const result = await callAPI('getProdiAuditDetail', { subsatker });
+  const result = await callAPI('getProdiAuditFullDetail', { subsatker });
   
   if (!result.success) {
     container.innerHTML = `<div class="alert alert-error">❌ ${escapeHtml(result.message)}</div>`;
@@ -157,8 +162,49 @@ async function openAudit(subsatker) {
   
   const data = result.data;
   
-  // Render docs table
-  if (data.docs.length === 0) {
+  // ===== RTL Section =====
+  const rtlCard = document.getElementById('rtl-section-card');
+  
+  if (rtlCard && data.rtl && data.rtl.length > 0) {
+    rtlCard.style.display = 'block';
+    
+    const rtl = data.rtl[0];
+    
+    document.getElementById('rtl-link-auditee').textContent = rtl.link_auditee || '-';
+    document.getElementById('rtl-link-auditee').href = rtl.link_auditee || '#';
+    document.getElementById('rtl-btn-auditee').href = rtl.link_auditee || '#';
+    
+    const statusInfo = document.getElementById('rtl-status-info');
+    if (rtl.status === 'submitted') {
+      statusInfo.innerHTML = '<span class="badge badge-info">📤 Submitted</span> <span style="font-size:12px;color:#6B7280;">— Siap direview</span>';
+    } else if (rtl.status === 'verified') {
+      statusInfo.innerHTML = '<span class="badge badge-success">✅ Terverifikasi</span>';
+    } else if (rtl.status === 'rejected') {
+      statusInfo.innerHTML = '<span class="badge badge-danger">❌ Ditolak</span>';
+    } else {
+      statusInfo.innerHTML = '<span class="badge badge-gray">❌ Belum submit</span>';
+    }
+    
+    const linkAdmin = data.link_audit_admin || '';
+    document.getElementById('rtl-link-admin').textContent = linkAdmin || 'Belum diatur';
+    document.getElementById('rtl-link-admin').href = linkAdmin || '#';
+    document.getElementById('rtl-btn-admin').href = linkAdmin || '#';
+    
+    if (data.rtl_assessment) {
+      document.querySelectorAll('input[name="status-rtl"]').forEach(r => {
+        r.checked = r.value === data.rtl_assessment.status_rtl;
+      });
+      document.getElementById('input-catatan-rtl').value = data.rtl_assessment.catatan_rtl || '';
+    } else {
+      document.querySelectorAll('input[name="status-rtl"]').forEach(r => r.checked = false);
+      document.getElementById('input-catatan-rtl').value = '';
+    }
+  } else if (rtlCard) {
+    rtlCard.style.display = 'none';
+  }
+  
+  // ===== Dokumen Section =====
+  if (!data.docs || data.docs.length === 0) {
     container.innerHTML = '<div class="empty-state"><div>📭</div><p>Tidak ada dokumen</p></div>';
   } else {
     let html = `
@@ -182,8 +228,12 @@ async function openAudit(subsatker) {
         statusBadge = '<span class="badge badge-success">✅ Lolos Audit</span>';
       } else if (doc.status === 'audited_fail') {
         statusBadge = '<span class="badge badge-warning">⚠️ Perlu Perbaikan</span>';
+      } else if (doc.status === 'submitted') {
+        statusBadge = '<span class="badge badge-info">📤 Submitted</span>';
+      } else if (doc.status === 'rejected') {
+        statusBadge = '<span class="badge badge-danger">❌ Ditolak</span>';
       } else {
-        statusBadge = `<span class="badge badge-gray">${escapeHtml(doc.status)}</span>`;
+        statusBadge = '<span class="badge badge-gray">❌ Kosong</span>';
       }
       
       const actionBtns = doc.link 
@@ -205,44 +255,46 @@ async function openAudit(subsatker) {
     container.innerHTML = html;
   }
   
-  // Load summary
-  document.getElementById('summary-card').style.display = 'block';
-  if (data.summary) {
-    document.getElementById('input-temuan').value = data.summary.temuan_audit || '';
-    document.getElementById('input-perbaikan').value = data.summary.rekomendasi_perbaikan || '';
-    document.getElementById('input-peningkatan').value = data.summary.rekomendasi_peningkatan || '';
-  } else {
-    document.getElementById('input-temuan').value = '';
-    document.getElementById('input-perbaikan').value = '';
-    document.getElementById('input-peningkatan').value = '';
+  // ===== Summary Section =====
+  const summaryCard = document.getElementById('summary-card');
+  if (summaryCard) {
+    summaryCard.style.display = 'block';
+    if (data.summary) {
+      document.getElementById('input-temuan').value = data.summary.temuan_audit || '';
+      document.getElementById('input-perbaikan').value = data.summary.rekomendasi_perbaikan || '';
+      document.getElementById('input-peningkatan').value = data.summary.rekomendasi_peningkatan || '';
+    } else {
+      document.getElementById('input-temuan').value = '';
+      document.getElementById('input-perbaikan').value = '';
+      document.getElementById('input-peningkatan').value = '';
+    }
   }
 }
 
 function openAuditDoc(docID) {
-  // Cari doc dari current data
-  // Simplifikasi: reload detail dari server
-  const container = document.getElementById('audit-docs-container');
-  // Ambil dari cache — kita simpan di variabel global saat load
-  // Sementara kita langsung query ulang
-  callAPI('getProdiAuditDetail', { subsatker: currentProdi }).then(r => {
+  callAPI('getProdiAuditFullDetail', { subsatker: currentProdi }).then(r => {
     if (!r.success) return;
-    const doc = r.data.docs.find(d => d.docID === docID);
+    
+    let doc = r.data.docs.find(d => d.docID === docID);
+    if (!doc) {
+      doc = r.data.rtl.find(d => d.docID === docID);
+    }
     if (!doc) return;
     
     currentAuditDoc = {
       docID: doc.docID,
       subsatker: currentProdi,
       nama_dokumen: doc.nama_dokumen,
-      link: doc.link,
+      link: doc.link || doc.link_auditee,
       verifikator_catatan: doc.verifikator_catatan,
       auditor_catatan: doc.auditor_catatan,
-      email_auditee: '' // Ambil dari submission — perlu API tambahan
+      email_auditee: doc.email_auditee || ''
     };
     
     document.getElementById('modal-audit-title').textContent = 'Audit: ' + doc.nama_dokumen;
-    document.getElementById('modal-audit-link').textContent = doc.link || '-';
-    document.getElementById('modal-audit-link').href = doc.link || '#';
-    document.getElementById('modal-audit-link-btn').href = doc.link || '#';
+    document.getElementById('modal-audit-link').textContent = doc.link || doc.link_auditee || '-';
+    document.getElementById('modal-audit-link').href = doc.link || doc.link_auditee || '#';
+    document.getElementById('modal-audit-link-btn').href = doc.link || doc.link_auditee || '#';
     document.getElementById('modal-catatan').value = doc.auditor_catatan || '';
     
     if (doc.verifikator_catatan) {
@@ -282,7 +334,7 @@ async function submitAuditPass() {
   if (result.success) {
     showToast('✅ ' + result.message);
     closeAuditModal();
-    await openAudit(currentProdi); // reload
+    await openAudit(currentProdi);
   } else {
     showToast('❌ ' + result.message, 'error');
   }
@@ -343,7 +395,7 @@ async function saveSummary() {
 }
 
 // ============================================
-// SECTION C: REVIEW RTL
+// SECTION C: REVIEW RTL (via tombol)
 // ============================================
 async function openRtl(subsatker) {
   currentProdi = subsatker;
@@ -368,7 +420,6 @@ async function openRtl(subsatker) {
   
   const data = result.data;
   
-  // Render doc
   let html = `
     <div style="padding:16px;background:#F9FAFB;border-radius:12px;margin-bottom:16px;">
       <div style="font-size:14px;font-weight:700;color:#0F3D2E;margin-bottom:8px;">
@@ -383,10 +434,8 @@ async function openRtl(subsatker) {
   `;
   container.innerHTML = html;
   
-  // Show assessment form
   document.getElementById('rtl-assessment-card').style.display = 'block';
   
-  // Pre-fill kalau sudah ada assessment
   if (data.assessment) {
     const radios = document.querySelectorAll('input[name="status-rtl"]');
     radios.forEach(r => {
@@ -408,8 +457,10 @@ async function saveRtlAssessment() {
   }
   
   const btn = document.getElementById('btn-save-rtl');
-  btn.disabled = true;
-  btn.textContent = 'Menyimpan...';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+  }
   
   const result = await callAPI('saveRtlAssessment', {
     subsatker: currentProdi,
@@ -417,8 +468,10 @@ async function saveRtlAssessment() {
     catatan_rtl: document.getElementById('input-catatan-rtl').value.trim()
   });
   
-  btn.disabled = false;
-  btn.textContent = '💾 Simpan Penilaian RTL';
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '💾 Simpan Penilaian RTL';
+  }
   
   if (result.success) {
     showToast('✅ ' + result.message);

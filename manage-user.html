@@ -5,98 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kelola User - Sistem Informasi Manajemen ISO UPNVJ</title>
   <link rel="stylesheet" href="assets/css/style.css">
-  <style>
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-    .modal-overlay.show {
-      display: flex;
-    }
-    .modal {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 500px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal h3 {
-      margin-bottom: 20px;
-      color: #111827;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 24px;
-    }
-  </style>
+  <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
 </head>
 <body>
 
-<!-- Navbar -->
-<div class="navbar">
-  <div class="container">
-    <div class="navbar-brand">
-      👥 Kelola User
-    </div>
-    <div class="navbar-user">
-      <a href="dashboard.html" style="color:white;text-decoration:none;opacity:0.9;font-size:14px;">Dashboard</a>
-      <a href="rekap.html" style="color:white;text-decoration:none;opacity:0.9;font-size:14px;">Rekap</a>
-      <span id="user-info">Memuat...</span>
-      <button onclick="logout()">Logout</button>
-    </div>
-  </div>
-</div>
+<div class="dashboard-layout">
 
-<!-- Main Content -->
-<div class="main-container">
-
-  <div class="card">
-    <div class="card-header">
-      <h2>👥 Daftar User</h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary" onclick="loadUsers(true)">🔄 Refresh</button>
-        <button class="btn btn-primary" onclick="openModal()">➕ Tambah User</button>
-</div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="assets/img/logo-upn.png" alt="UPNVJ">
+        <div class="sidebar-brand-text">
+          ISO UPNVJ
+          <small>Sistem Informasi Manajemen</small>
+        </div>
+      </div>
     </div>
-
-    <!-- Filter -->
-    <div class="filters">
-      <label>Cari:</label>
-      <input type="text" id="filter-search" placeholder="Cari nama atau email..." oninput="renderUsers()" style="flex:1;min-width:200px;">
-      <label>Role:</label>
-        <select id="filter-role" onchange="renderUsers()">
+    
+    <nav class="sidebar-menu">
+      <div class="sidebar-section-title">Menu Utama</div>
+      <a href="dashboard.html"><span class="sidebar-menu-icon">🏠</span> Dashboard</a>
+      <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;"><span class="sidebar-menu-icon">✅</span> Verifikasi</a>
+      <a href="audit.html" id="sidebar-audit" style="display:none;"><span class="sidebar-menu-icon">🔍</span> Audit</a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
+      <a href="rekap.html"><span class="sidebar-menu-icon">📊</span> Rekap</a>
+      <a href="manage-user.html" class="active" id="sidebar-manage-user" style="display:none;"><span class="sidebar-menu-icon">👥</span> Kelola User</a>
+      <a href="manage-rtl.html" id="sidebar-manage-rtl" style="display:none;"><span class="sidebar-menu-icon">🔗</span> Kelola Link RTL</a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Sistem</div>
+      <a href="#" onclick="logout();return false;"><span class="sidebar-menu-icon">🚪</span> Logout</a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      Created by <strong>Pusat Sertifikasi dan Akreditasi Internasional LPMPP</strong>
+      <div style="margin-top:6px;">© 2026 UPN "Veteran" Jakarta</div>
+    </div>
+  </aside>
+  
+  <!-- MAIN AREA -->
+  <main class="main-area">
+    
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-page-title">Kelola User</div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-info-name" id="user-name">Memuat...</div>
+            <div class="user-info-role" id="user-role">-</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+    
+    <div class="content">
+      
+      <div class="page-header">
+        <div class="page-header-content">
+          <div>
+            <h1>👥 Kelola User</h1>
+            <p>Tambah, edit, atau hapus user yang bisa mengakses sistem</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn" onclick="loadUsers(true)">🔄 Refresh</button>
+            <button class="btn" onclick="openModal()" style="background:rgba(255,255,255,0.25);">➕ Tambah User</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Daftar User</h2>
+        </div>
+        
+        <div class="filters">
+          <label>Cari:</label>
+          <input type="text" id="filter-search" placeholder="Cari nama atau email..." oninput="renderUsers()" style="flex:1;min-width:200px;">
+          <label>Role:</label>
+          <select id="filter-role" onchange="renderUsers()">
             <option value="">Semua Role</option>
             <option value="administrator">Administrator</option>
             <option value="auditee">Auditee</option>
             <option value="verifikator">Verifikator</option>
             <option value="auditor">Auditor</option>
-         </select>
-      <label>Status:</label>
-      <select id="filter-status" onchange="renderUsers()">
-        <option value="">Semua Status</option>
-        <option value="aktif">Aktif</option>
-        <option value="nonaktif">Nonaktif</option>
-      </select>
-    </div>
-
-    <!-- Table -->
-    <div class="table-wrapper" id="table-container">
-      <div class="loading">
-        <span class="spinner"></span> Memuat data user...
+          </select>
+          <label>Status:</label>
+          <select id="filter-status" onchange="renderUsers()">
+            <option value="">Semua Status</option>
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
+          </select>
+        </div>
+        
+        <div class="table-wrapper" id="table-container">
+          <div class="loading">
+            <span class="spinner"></span> Memuat data user...
+          </div>
+        </div>
       </div>
+      
     </div>
-  </div>
-
+  </main>
 </div>
 
 <!-- Modal Form -->
@@ -119,12 +133,12 @@
     
     <div class="form-group">
       <label>Role <span style="color:#dc2626;">*</span></label>
-            <select id="form-role">
-                <option value="auditee">Auditee (input dokumen prodi)</option>
-                <option value="administrator">Administrator (akses penuh)</option>
-                <option value="verifikator">Verifikator (verifikasi link)</option>
-                <option value="auditor">Auditor (audit konten)</option>
-             </select>
+      <select id="form-role">
+        <option value="auditee">Auditee (input dokumen prodi)</option>
+        <option value="administrator">Administrator (akses penuh)</option>
+        <option value="verifikator">Verifikator (verifikasi link)</option>
+        <option value="auditor">Auditor (audit konten)</option>
+      </select>
     </div>
     
     <div class="form-group">
@@ -149,7 +163,6 @@
   </div>
 </div>
 
-<!-- Scripts -->
 <script src="assets/js/config.js"></script>
 <script src="assets/js/api.js"></script>
 <script src="assets/js/manage-user.js"></script>

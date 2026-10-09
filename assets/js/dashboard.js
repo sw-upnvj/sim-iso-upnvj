@@ -14,6 +14,13 @@ window.addEventListener('load', async () => {
   renderUserInfo();
   await setupSubsatkerFilter();
   await loadDocs();
+  await loadCharts();
+  
+  // Load RTL & Audit info (khusus auditee)
+  if (currentUser.role === 'auditee') {
+    await loadRtlInfo();
+    await loadAuditResult();
+  }
 });
 
 function renderUserInfo() {
@@ -53,6 +60,9 @@ function renderUserInfo() {
   if (currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-manage-user');
     if (el) el.style.display = 'flex';
+    
+    const elRtl = document.getElementById('sidebar-manage-rtl');
+    if (elRtl) elRtl.style.display = 'flex';
   }
 }
 
@@ -146,11 +156,13 @@ async function loadAuditSummary(subsatker) {
 function updateStats(docs) {
   const total = docs.length;
   const tersedia = docs.filter(d => d.status !== 'kosong' && d.status !== 'draft').length;
+  const verified = docs.filter(d => d.status === 'verified' || d.status === 'audited_pass').length;
   const kosong = total - tersedia;
-  const percent = total > 0 ? Math.round((tersedia / total) * 100) : 0;
+  const percent = total > 0 ? Math.round((verified / total) * 100) : 0;
   
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-tersedia').textContent = tersedia;
+  document.getElementById('stat-verified').textContent = verified;
   document.getElementById('stat-kosong').textContent = kosong;
   document.getElementById('stat-progress').textContent = percent + '%';
   
@@ -446,6 +458,334 @@ async function saveLink(docID, link) {
   } else {
     showToast('❌ ' + result.message, 'error');
   }
+}
+
+// ============================================
+// CHART — Ringkasan Kesiapan ISO
+// ============================================
+let chartBarInstance = null;
+let chartDonutInstance = null;
+let currentChartType = 'bar';
+
+async function loadCharts() {
+  const result = await callAPI('getRekap');
+  
+  if (!result.success || !result.data) {
+    document.getElementById('chart-section').style.display = 'none';
+    return;
+  }
+  
+  const data = result.data;
+  
+  // Group by Fakultas
+  const fakultasMap = {
+    'Fakultas Teknik': [],
+    'Fakultas Ekonomi dan Bisnis': [],
+    'Fakultas Hukum': [],
+    'Fakultas Ilmu Kesehatan': [],
+    'Fakultas Ilmu Komputer': [],
+    'Fakultas Ilmu Sosial dan Ilmu Politik': [],
+    'Fakultas Kedokteran': [],
+    'Satuan Kerja Pendukung': []
+  };
+  
+  data.forEach(item => {
+    const subsatker = item.subsatker;
+    let fakultas = 'Satuan Kerja Pendukung';
+    
+    // Deteksi fakultas berdasarkan prefix subsatker
+    if (subsatker.match(/^D3|^S1|^S2|^S3|^Profesi/) && 
+        (subsatker.includes('Teknik'))) {
+      fakultas = 'Fakultas Teknik';
+    } else if (subsatker.match(/Perbankan|Akuntansi|Manajemen|Ekonomi/)) {
+      fakultas = 'Fakultas Ekonomi dan Bisnis';
+    } else if (subsatker.match(/Hukum/)) {
+      fakultas = 'Fakultas Hukum';
+    } else if (subsatker.match(/Keperawatan|Fisioterapi|Gizi|Kesehatan|Ners/)) {
+      fakultas = 'Fakultas Ilmu Kesehatan';
+    } else if (subsatker.match(/Sistem Informasi|Informatika|Sains Data/)) {
+      fakultas = 'Fakultas Ilmu Komputer';
+    } else if (subsatker.match(/Komunikasi|Politik|Hubungan Internasional|Sains Informasi|Kajian Film/)) {
+      fakultas = 'Fakultas Ilmu Sosial dan Ilmu Politik';
+    } else if (subsatker.match(/Kedokteran|Farmasi|Biomedis|Radiologi|Biologi|Apoteker/)) {
+      fakultas = 'Fakultas Kedokteran';
+    }
+    
+    if (!fakultasMap[fakultas]) fakultasMap[fakultas] = [];
+    fakultasMap[fakultas].push(item.skor);
+  });
+  
+  // Hitung rata-rata per fakultas
+  const fakultasLabels = [];
+  const fakultasScores = [];
+  
+  Object.entries(fakultasMap).forEach(([nama, scores]) => {
+    if (scores.length === 0) return;
+    const avg = scores.reduce((s, x) => s + x, 0) / scores.length;
+    fakultasLabels.push(nama.replace('Fakultas ', 'F. '));
+    fakultasScores.push(Math.round(avg * 10) / 10);
+  });
+  
+  // Warna berdasarkan skor
+  const barColors = fakultasScores.map(skor => {
+    if (skor >= 90) return '#059669';
+    if (skor >= 70) return '#D97706';
+    return '#DC2626';
+  });
+  
+  // ===== Chart Bar =====
+  const ctxBar = document.getElementById('chart-bar').getContext('2d');
+  
+  if (chartBarInstance) chartBarInstance.destroy();
+  
+  chartBarInstance = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels: fakultasLabels,
+      datasets: [{
+        label: 'Rata-rata Skor (%)',
+        data: fakultasScores,
+        backgroundColor: barColors,
+        borderRadius: 8,
+        borderSkipped: false,
+        barThickness: 28
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0F3D2E',
+          titleColor: 'white',
+          bodyColor: 'white',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: (ctx) => 'Skor: ' + ctx.parsed.x + '%'
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: {
+            callback: (val) => val + '%',
+            color: '#6B7280',
+            font: { size: 11 }
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: '#0F3D2E',
+            font: { size: 12, weight: '600' }
+          }
+        }
+      }
+    }
+  });
+  
+  // ===== Chart Donut =====
+  const excellent = data.filter(d => d.skor >= 90).length;
+  const good = data.filter(d => d.skor >= 70 && d.skor < 90).length;
+  const poor = data.filter(d => d.skor < 70).length;
+  
+  const ctxDonut = document.getElementById('chart-donut').getContext('2d');
+  
+  if (chartDonutInstance) chartDonutInstance.destroy();
+  
+  chartDonutInstance = new Chart(ctxDonut, {
+    type: 'doughnut',
+    data: {
+      labels: ['Excellent (≥90)', 'Good (70-89)', 'Perlu Perbaikan (<70)'],
+      datasets: [{
+        data: [excellent, good, poor],
+        backgroundColor: ['#059669', '#D97706', '#DC2626'],
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0F3D2E',
+          titleColor: 'white',
+          bodyColor: 'white',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: (ctx) => {
+              const total = excellent + good + poor;
+              const percent = Math.round((ctx.parsed / total) * 100);
+              return ctx.label + ': ' + ctx.parsed + ' prodi (' + percent + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Legend manual
+  const legendHtml = `
+    <div class="donut-legend-item">
+      <div class="donut-legend-color" style="background:#059669;"></div>
+      <div class="donut-legend-label">✅ Excellent (≥90)</div>
+      <div class="donut-legend-value">${excellent}</div>
+    </div>
+    <div class="donut-legend-item">
+      <div class="donut-legend-color" style="background:#D97706;"></div>
+      <div class="donut-legend-label">⚠️ Good (70-89)</div>
+      <div class="donut-legend-value">${good}</div>
+    </div>
+    <div class="donut-legend-item">
+      <div class="donut-legend-color" style="background:#DC2626;"></div>
+      <div class="donut-legend-label">❌ Perlu Perbaikan</div>
+      <div class="donut-legend-value">${poor}</div>
+    </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #E5E7EB;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#0F3D2E;">${data.length}</div>
+      <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;">Total Prodi</div>
+    </div>
+  `;
+  
+  document.getElementById('chart-donut-legend').innerHTML = legendHtml;
+}
+
+function switchChart(type) {
+  currentChartType = type;
+  
+  const btnBar = document.getElementById('btn-chart-bar');
+  const btnDonut = document.getElementById('btn-chart-donut');
+  const containerBar = document.getElementById('chart-bar-container');
+  const containerDonut = document.getElementById('chart-donut-container');
+  
+  if (type === 'bar') {
+    btnBar.classList.add('active');
+    btnDonut.classList.remove('active');
+    containerBar.style.display = 'block';
+    containerDonut.style.display = 'none';
+  } else {
+    btnBar.classList.remove('active');
+    btnDonut.classList.add('active');
+    containerBar.style.display = 'none';
+    containerDonut.style.display = 'block';
+  }
+}
+
+// ============================================
+// RTL Info — untuk auditee prodi dengan RTL
+// ============================================
+async function loadRtlInfo() {
+  const card = document.getElementById('rtl-card');
+  if (!card) return;
+  
+  const result = await callAPI('getMyRtlLink');
+  
+  if (!result.success || !result.data || !result.data.link_rtl) {
+    card.style.display = 'none';
+    return;
+  }
+  
+  const link = result.data.link_rtl;
+  
+  document.getElementById('rtl-link-url').textContent = link;
+  document.getElementById('rtl-link-url').href = link;
+  document.getElementById('btn-rtl-open').href = link;
+  
+  const docID = findRtlDocID();
+  if (docID) {
+    const rtlDoc = allDocs.find(d => d.docID === docID);
+    if (rtlDoc) {
+      const statusInfo = document.getElementById('rtl-status-info');
+      const btn = document.getElementById('btn-rtl-confirm');
+      
+      if (rtlDoc.status === 'verified') {
+        statusInfo.innerHTML = '<span style="color:#059669;font-weight:700;">✅ Sudah diverifikasi</span>';
+        btn.disabled = true;
+        btn.style.background = '#9CA3AF';
+        btn.style.cursor = 'not-allowed';
+        btn.textContent = '✅ Sudah Terverifikasi';
+      } else if (rtlDoc.status === 'submitted') {
+        statusInfo.innerHTML = '<span style="color:#1E40AF;font-weight:700;">📤 Menunggu verifikasi</span>';
+        btn.disabled = true;
+        btn.style.background = '#9CA3AF';
+        btn.style.cursor = 'not-allowed';
+        btn.textContent = '📤 Menunggu Verifikasi';
+      } else if (rtlDoc.status === 'rejected') {
+        statusInfo.innerHTML = '<span style="color:#DC2626;font-weight:700;">❌ Ditolak — perlu perbaikan</span>';
+      } else {
+        statusInfo.innerHTML = '<span style="color:#D97706;font-weight:700;">⏳ Belum dikonfirmasi</span>';
+      }
+    }
+  }
+  
+  card.style.display = 'block';
+}
+
+function findRtlDocID() {
+  const rtlDoc = allDocs.find(d => 
+    d.kategori === 'B' || 
+    d.nama_dokumen.toLowerCase().includes('rtl')
+  );
+  return rtlDoc ? rtlDoc.docID : null;
+}
+
+async function confirmRtl() {
+  const docID = findRtlDocID();
+  if (!docID) {
+    showToast('Dokumen RTL tidak ditemukan', 'error');
+    return;
+  }
+  
+  if (!confirm('Konfirmasi bahwa Anda sudah selesai mengisi dokumen RTL di link yang disiapkan?')) return;
+  
+  const btn = document.getElementById('btn-rtl-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+  
+  const result = await callAPI('confirmRtlDone', { docID });
+  
+  if (result.success) {
+    showToast('✅ ' + result.message);
+    await loadDocs();
+    await loadRtlInfo();
+  } else {
+    showToast('❌ ' + result.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '✅ Konfirmasi Selesai';
+  }
+}
+
+// ============================================
+// Audit Result
+// ============================================
+async function loadAuditResult() {
+  const card = document.getElementById('audit-result-card');
+  if (!card) return;
+  
+  const result = await callAPI('getMyAuditResult');
+  
+  if (!result.success || !result.data || !result.data.link_audit) {
+    card.style.display = 'none';
+    return;
+  }
+  
+  const link = result.data.link_audit;
+  
+  document.getElementById('audit-link-url').textContent = link;
+  document.getElementById('audit-link-url').href = link;
+  document.getElementById('btn-audit-open').href = link;
+  
+  card.style.display = 'block';
 }
 
 function logout() {

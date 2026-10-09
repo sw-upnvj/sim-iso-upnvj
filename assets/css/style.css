@@ -1450,3 +1450,46 @@ table tr:hover { background: var(--gray-50); }
 .doc-child td {
   border-bottom: 1px solid var(--gray-100);
 }
+
+/* ===== Modal Detail ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal {
+  background: white;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.modal h3 {
+  margin-bottom: 16px;
+  color: var(--gray-900);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.badge small {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-top: 2px;
+}

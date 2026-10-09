@@ -162,12 +162,14 @@ function renderUsers() {
   `;
   
   filtered.forEach((u, index) => {
-    const roleBadge = u.role === 'admin' 
-      ? '<span class="badge badge-danger">Admin</span>'
-      : u.role === 'auditor'
+    const roleBadge = u.role === 'administrator' 
+     ? '<span class="badge badge-danger">Administrator</span>'
+        : u.role === 'verifikator'
+        ? '<span class="badge badge-info">Verifikator</span>'
+        : u.role === 'auditor'
         ? '<span class="badge badge-warning">Auditor</span>'
-        : '<span class="badge badge-info">User</span>';
-    
+        : '<span class="badge" style="background:#D1FAE5;color:#065F46;">Auditee</span>';
+
     const statusBadge = u.aktif
       ? '<span class="badge badge-success">✅ Aktif</span>'
       : '<span class="badge badge-gray">⛔ Nonaktif</span>';

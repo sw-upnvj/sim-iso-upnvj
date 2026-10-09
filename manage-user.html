@@ -74,12 +74,13 @@
       <label>Cari:</label>
       <input type="text" id="filter-search" placeholder="Cari nama atau email..." oninput="renderUsers()" style="flex:1;min-width:200px;">
       <label>Role:</label>
-      <select id="filter-role" onchange="renderUsers()">
-        <option value="">Semua Role</option>
-        <option value="admin">Admin</option>
-        <option value="user">User</option>
-        <option value="auditor">Auditor</option>
-      </select>
+        <select id="filter-role" onchange="renderUsers()">
+            <option value="">Semua Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="auditee">Auditee</option>
+            <option value="verifikator">Verifikator</option>
+            <option value="auditor">Auditor</option>
+         </select>
       <label>Status:</label>
       <select id="filter-status" onchange="renderUsers()">
         <option value="">Semua Status</option>
@@ -118,11 +119,12 @@
     
     <div class="form-group">
       <label>Role <span style="color:#dc2626;">*</span></label>
-      <select id="form-role">
-        <option value="user">User (hanya input prodi sendiri)</option>
-        <option value="admin">Admin (akses penuh)</option>
-        <option value="auditor">Auditor (read-only)</option>
-      </select>
+            <select id="form-role">
+                <option value="auditee">Auditee (input dokumen prodi)</option>
+                <option value="administrator">Administrator (akses penuh)</option>
+                <option value="verifikator">Verifikator (verifikasi link)</option>
+                <option value="auditor">Auditor (audit konten)</option>
+             </select>
     </div>
     
     <div class="form-group">

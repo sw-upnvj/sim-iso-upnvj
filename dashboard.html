@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Sistem Input Dokumen ISO UPNVJ</title>
+  <title>Dashboard - Sistem Informasi Manajemen ISO UPNVJ</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
 </head>
@@ -23,33 +23,41 @@
       </div>
     </div>
     
-    <nav class="sidebar-menu">
-      <div class="sidebar-section-title">Menu Utama</div>
-      <a href="dashboard.html" class="active">
-        <span class="sidebar-menu-icon">🏠</span>
-        Dashboard
-      </a>
-      <a href="dashboard.html">
-        <span class="sidebar-menu-icon">📋</span>
-        Dokumen
-      </a>
-      
-      <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
-      <a href="rekap.html">
-        <span class="sidebar-menu-icon">📊</span>
-        Rekap
-      </a>
-      <a href="manage-user.html" id="sidebar-manage-user" style="display:none;">
-        <span class="sidebar-menu-icon">👥</span>
-        Kelola User
-      </a>
-      
-      <div class="sidebar-section-title" style="margin-top:12px;">Sistem</div>
-      <a href="#" onclick="logout();return false;">
-        <span class="sidebar-menu-icon">🚪</span>
-        Logout
-      </a>
-    </nav>
+          <nav class="sidebar-menu">
+        <div class="sidebar-section-title">Menu Utama</div>
+        <a href="dashboard.html" class="active">
+          <span class="sidebar-menu-icon">🏠</span>
+          Dashboard
+        </a>
+        
+        <!-- Menu Khusus Verifikator -->
+        <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;">
+          <span class="sidebar-menu-icon">✅</span>
+          Verifikasi
+        </a>
+        
+        <!-- Menu Khusus Auditor -->
+        <a href="audit.html" id="sidebar-audit" style="display:none;">
+          <span class="sidebar-menu-icon">🔍</span>
+          Audit
+        </a>
+        
+        <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
+        <a href="rekap.html" id="sidebar-rekap">
+          <span class="sidebar-menu-icon">📊</span>
+          Rekap
+        </a>
+        <a href="manage-user.html" id="sidebar-manage-user" style="display:none;">
+          <span class="sidebar-menu-icon">👥</span>
+          Kelola User
+        </a>
+        
+        <div class="sidebar-section-title" style="margin-top:12px;">Sistem</div>
+        <a href="#" onclick="logout();return false;">
+          <span class="sidebar-menu-icon">🚪</span>
+          Logout
+        </a>
+      </nav>
     
     <div class="sidebar-footer">
       Created by <strong>Pusat Sertifikasi dan Akreditasi Internasional LPMPP</strong>
@@ -150,6 +158,42 @@
               <option value="kosong">❌ Belum Diisi</option>
             </select>
             <input type="text" id="filter-search" placeholder="Cari dokumen..." oninput="renderDocs()">
+          </div>
+        </div>
+
+                <!-- Section 3 Poin Umum dari Auditor -->
+        <div class="card" id="audit-summary-card" style="display:none;">
+          <div class="card-header">
+            <h2>📋 Catatan Umum dari Auditor</h2>
+            <span class="badge badge-info">Per Subsatker</span>
+          </div>
+          <div style="display:grid;gap:16px;margin-top:16px;">
+            <div style="padding:16px;background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;">
+              <div style="font-weight:700;color:#92400E;font-size:13px;margin-bottom:6px;">🔍 TEMUAN AUDIT</div>
+              <div id="summary-temuan" style="color:#374151;font-size:14px;line-height:1.6;"></div>
+            </div>
+            <div style="padding:16px;background:#DBEAFE;border-left:4px solid #2563EB;border-radius:8px;">
+              <div style="font-weight:700;color:#1E40AF;font-size:13px;margin-bottom:6px;">🔧 REKOMENDASI PERBAIKAN</div>
+              <div id="summary-perbaikan" style="color:#374151;font-size:14px;line-height:1.6;"></div>
+            </div>
+            <div style="padding:16px;background:#D1FAE5;border-left:4px solid #059669;border-radius:8px;">
+              <div style="font-weight:700;color:#065F46;font-size:13px;margin-bottom:6px;">📈 REKOMENDASI PENINGKATAN</div>
+              <div id="summary-peningkatan" style="color:#374151;font-size:14px;line-height:1.6;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal: Detail Dokumen + Catatan -->
+        <div class="modal-overlay" id="modal-detail">
+          <div class="modal" style="max-width:600px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+              <h3 id="modal-detail-title" style="margin:0;">Detail Dokumen</h3>
+              <button onclick="closeDetailModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6B7280;">×</button>
+            </div>
+            
+            <div id="modal-detail-content">
+              <!-- Content akan di-render via JS -->
+            </div>
           </div>
         </div>
         

@@ -1,5 +1,6 @@
 // ============================================
 // rekap.js - Logic halaman rekap admin
+// Formula: Skor = (verified / total) × 100%
 // ============================================
 
 let allRekap = [];
@@ -11,8 +12,8 @@ window.addEventListener('load', async () => {
   
   currentUser = session.user;
   
-  if (currentUser.role !== 'admin' && currentUser.role !== 'auditor') {
-    alert('Akses ditolak. Halaman ini hanya untuk admin & auditor.');
+  if (currentUser.role !== 'administrator' && currentUser.role !== 'auditor') {
+    alert('Akses ditolak. Halaman ini hanya untuk administrator & auditor.');
     window.location.href = 'dashboard.html';
     return;
   }
@@ -33,8 +34,17 @@ function renderUserInfo() {
     .toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   
-  if (currentUser.role === 'admin') {
-    document.getElementById('sidebar-manage-user').style.display = 'flex';
+  // Tampilkan menu khusus per role
+  if (currentUser.role === 'administrator') {
+    const el = document.getElementById('sidebar-manage-user');
+    if (el) el.style.display = 'flex';
+    const elVerif = document.getElementById('sidebar-verifikasi');
+    if (elVerif) elVerif.style.display = 'flex';
+    const elAudit = document.getElementById('sidebar-audit');
+    if (elAudit) elAudit.style.display = 'flex';
+  } else if (currentUser.role === 'auditor') {
+    const elAudit = document.getElementById('sidebar-audit');
+    if (elAudit) elAudit.style.display = 'flex';
   }
 }
 
@@ -59,9 +69,9 @@ async function loadRekap() {
 
 function renderStats() {
   const total = allRekap.length;
-  const excellent = allRekap.filter(r => r.totalSkor >= 90).length;
-  const good = allRekap.filter(r => r.totalSkor >= 70 && r.totalSkor < 90).length;
-  const poor = allRekap.filter(r => r.totalSkor < 70).length;
+  const excellent = allRekap.filter(r => r.skor >= 90).length;
+  const good = allRekap.filter(r => r.skor >= 70 && r.skor < 90).length;
+  const poor = allRekap.filter(r => r.skor < 70).length;
   
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-excellent').textContent = excellent;
@@ -88,15 +98,15 @@ function renderRekap() {
   
   let filtered = allRekap.filter(r => {
     if (searchFilter && !r.subsatker.toLowerCase().includes(searchFilter)) return false;
-    if (skorFilter === 'excellent' && r.totalSkor < 90) return false;
-    if (skorFilter === 'good' && (r.totalSkor < 70 || r.totalSkor >= 90)) return false;
-    if (skorFilter === 'poor' && r.totalSkor >= 70) return false;
+    if (skorFilter === 'excellent' && r.skor < 90) return false;
+    if (skorFilter === 'good' && (r.skor < 70 || r.skor >= 90)) return false;
+    if (skorFilter === 'poor' && r.skor >= 70) return false;
     return true;
   });
   
   filtered.sort((a, b) => {
-    if (sortFilter === 'skor-desc') return b.totalSkor - a.totalSkor;
-    if (sortFilter === 'skor-asc') return a.totalSkor - b.totalSkor;
+    if (sortFilter === 'skor-desc') return b.skor - a.skor;
+    if (sortFilter === 'skor-asc') return a.skor - b.skor;
     if (sortFilter === 'nama') return a.subsatker.localeCompare(b.subsatker);
     if (sortFilter === 'progress') return b.persentase - a.persentase;
     return 0;
@@ -118,11 +128,9 @@ function renderRekap() {
         <tr>
           <th style="width:50px;">No</th>
           <th>Subsatker</th>
-          <th style="width:200px;">Progress</th>
-          <th style="width:90px;text-align:center;">Skor A</th>
-          <th style="width:90px;text-align:center;">Skor B</th>
-          <th style="width:110px;text-align:center;">Total</th>
-          <th style="width:130px;">Status</th>
+          <th style="width:220px;">Progress</th>
+          <th style="width:110px;text-align:center;">Skor</th>
+          <th style="width:150px;">Status</th>
         </tr>
       </thead>
       <tbody>
@@ -131,13 +139,13 @@ function renderRekap() {
   filtered.forEach((r, index) => {
     const percent = r.persentase;
     let progressClass = 'poor';
-    if (r.totalSkor >= 90) progressClass = 'excellent';
-    else if (r.totalSkor >= 70) progressClass = 'good';
+    if (r.skor >= 90) progressClass = 'excellent';
+    else if (r.skor >= 70) progressClass = 'good';
     
     let statusChip;
-    if (r.totalSkor >= 90) {
+    if (r.skor >= 90) {
       statusChip = '<span class="score-chip excellent">✅ Excellent</span>';
-    } else if (r.totalSkor >= 70) {
+    } else if (r.skor >= 70) {
       statusChip = '<span class="score-chip good">⚠️ Good</span>';
     } else {
       statusChip = '<span class="score-chip poor">❌ Perlu Perbaikan</span>';
@@ -152,12 +160,12 @@ function renderRekap() {
             <div class="mini-progress-bar">
               <div class="mini-progress-fill ${progressClass}" style="width:${percent}%"></div>
             </div>
-            <span style="font-weight:700;color:var(--gray-700);min-width:70px;text-align:right;">${r.tersedia}/${r.total}</span>
+            <span style="font-weight:700;color:var(--gray-700);min-width:80px;text-align:right;">${r.verified}/${r.total}</span>
           </div>
         </td>
-        <td style="text-align:center;"><span class="score-value">${r.skorA.toFixed(1)}</span></td>
-        <td style="text-align:center;"><span class="score-value">${r.skorB.toFixed(1)}</span></td>
-        <td style="text-align:center;"><span class="score-value ${progressClass}">${r.totalSkor.toFixed(1)}</span></td>
+        <td style="text-align:center;">
+          <span class="score-value ${progressClass}">${r.skor.toFixed(1)}%</span>
+        </td>
         <td>${statusChip}</td>
       </tr>
     `;
@@ -173,16 +181,13 @@ function exportCSV() {
     return;
   }
   
-  const headers = ['No', 'Subsatker', 'Tersedia', 'Total', 'Persentase', 'Skor A', 'Skor B', 'Total Skor'];
+  const headers = ['No', 'Subsatker', 'Verified', 'Total', 'Skor'];
   const rows = allRekap.map((r, i) => [
     i + 1,
     r.subsatker,
-    r.tersedia,
+    r.verified,
     r.total,
-    r.persentase + '%',
-    r.skorA.toFixed(2),
-    r.skorB.toFixed(2),
-    r.totalSkor.toFixed(2)
+    r.skor.toFixed(2) + '%'
   ]);
   
   let csv = headers.join(',') + '\n';

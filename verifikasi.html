@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rekap - Sistem Informasi Manajemen ISO UPNVJ</title>
+  <title>Verifikasi - Sistem Informasi Manajemen ISO UPNVJ</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
 </head>
@@ -29,8 +29,7 @@
         <span class="sidebar-menu-icon">🏠</span>
         Dashboard
       </a>
-      
-      <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;">
+      <a href="verifikasi.html" class="active">
         <span class="sidebar-menu-icon">✅</span>
         Verifikasi
       </a>
@@ -40,7 +39,7 @@
       </a>
       
       <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
-      <a href="rekap.html" class="active">
+      <a href="rekap.html">
         <span class="sidebar-menu-icon">📊</span>
         Rekap
       </a>
@@ -65,9 +64,10 @@
   <!-- MAIN AREA -->
   <main class="main-area">
     
+    <!-- Topbar -->
     <div class="topbar">
       <div class="topbar-left">
-        <div class="topbar-page-title">Rekap</div>
+        <div class="topbar-page-title">Verifikasi Dokumen</div>
       </div>
       <div class="topbar-right">
         <div class="user-chip">
@@ -81,17 +81,18 @@
       </div>
     </div>
     
+    <!-- Content -->
     <div class="content">
       
+      <!-- Page Header -->
       <div class="page-header">
         <div class="page-header-content">
           <div>
-            <h1>📊 Rekap Kesiapan ISO <span id="year-badge">2026</span></h1>
-            <p>Pantau progress kelengkapan dokumen semua subsatker</p>
+            <h1>✅ Verifikasi Dokumen ISO</h1>
+            <p>Periksa link dokumen yang di-submit auditee — pastikan link bisa dibuka & tidak ada revisi</p>
           </div>
           <div class="page-header-actions">
-            <button class="btn" onclick="exportCSV()">📥 Export CSV</button>
-            <button class="btn" onclick="window.print()">🖨️ Print</button>
+            <button class="btn" onclick="loadDocs(true)">🔄 Refresh</button>
           </div>
         </div>
       </div>
@@ -100,58 +101,49 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon green">🏛️</div>
+            <div class="stat-card-icon" style="background:rgba(8,145,178,0.12);">📤</div>
           </div>
-          <div class="stat-card-value" id="stat-total">-</div>
-          <div class="stat-card-label">Total Subsatker</div>
+          <div class="stat-card-value" id="stat-submitted">-</div>
+          <div class="stat-card-label">Menunggu Verifikasi</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon mint">✅</div>
+            <div class="stat-card-icon" style="background:rgba(217,119,6,0.12);">✅</div>
           </div>
-          <div class="stat-card-value" id="stat-excellent">-</div>
-          <div class="stat-card-label">Skor ≥ 90</div>
+          <div class="stat-card-value" id="stat-verified">-</div>
+          <div class="stat-card-label">Sudah Diverifikasi</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon amber">⚠️</div>
+            <div class="stat-card-icon" style="background:rgba(220,38,38,0.12);">❌</div>
           </div>
-          <div class="stat-card-value" id="stat-good">-</div>
-          <div class="stat-card-label">Skor 70 - 89</div>
+          <div class="stat-card-value" id="stat-rejected">-</div>
+          <div class="stat-card-label">Ditolak</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon" style="background:rgba(220,38,38,0.1);">📉</div>
+            <div class="stat-card-icon" style="background:rgba(5,150,105,0.12);">📊</div>
           </div>
-          <div class="stat-card-value" id="stat-poor">-</div>
-          <div class="stat-card-label">Skor &lt; 70</div>
+          <div class="stat-card-value" id="stat-progress">-</div>
+          <div class="stat-card-label">Progress Verifikasi</div>
         </div>
       </div>
       
       <!-- Table Card -->
       <div class="table-card">
         <div class="table-card-header">
-          <div class="table-card-title">📋 Rekap per Subsatker</div>
+          <div class="table-card-title">📋 Dokumen Menunggu Verifikasi</div>
           <div class="table-filters">
-            <input type="text" id="filter-search" placeholder="Cari subsatker..." oninput="renderRekap()">
-            <select id="filter-skor" onchange="renderRekap()">
-              <option value="">Semua Skor</option>
-              <option value="excellent">≥ 90 (Excellent)</option>
-              <option value="good">70 - 89 (Good)</option>
-              <option value="poor">&lt; 70 (Perlu Perbaikan)</option>
+            <select id="filter-subsatker" onchange="renderDocs()">
+              <option value="">Semua Subsatker</option>
             </select>
-            <select id="filter-sort" onchange="renderRekap()">
-              <option value="skor-desc">Skor Tertinggi</option>
-              <option value="skor-asc">Skor Terendah</option>
-              <option value="nama">Nama A-Z</option>
-              <option value="progress">Progress Terbanyak</option>
-            </select>
+            <input type="text" id="filter-search" placeholder="Cari dokumen..." oninput="renderDocs()">
           </div>
         </div>
         
         <div class="table-wrapper" id="table-container">
           <div class="loading">
-            <span class="spinner"></span> Memuat data rekap...
+            <span class="spinner"></span> Memuat data...
           </div>
         </div>
       </div>
@@ -162,9 +154,44 @@
   
 </div>
 
+<!-- MODAL VERIFIKASI -->
+<div class="modal-overlay" id="modal-verify">
+  <div class="modal" style="max-width:560px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 id="modal-title" style="margin:0;">Verifikasi Dokumen</h3>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6B7280;">×</button>
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Subsatker</div>
+      <div id="modal-subsatker" style="font-weight:700;color:#0F3D2E;"></div>
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Link Dokumen</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a id="modal-link" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;flex:1;"></a>
+        <a id="modal-link-btn" href="#" target="_blank" class="btn btn-primary btn-sm">🔗 Buka</a>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label>Catatan Verifikator</label>
+      <textarea id="modal-catatan" rows="4" placeholder="Contoh: Link bisa dibuka, tidak ada revisi"></textarea>
+      <div class="form-hint">Catatan ini akan dilihat oleh auditee dan auditor</div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn btn-danger" onclick="submitReject()" id="btn-reject">❌ Tolak</button>
+      <button class="btn btn-primary" onclick="submitVerify()" id="btn-verify">✅ Verifikasi</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/js/config.js"></script>
 <script src="assets/js/api.js"></script>
-<script src="assets/js/rekap.js"></script>
+<script src="assets/js/verifikasi.js"></script>
 
 </body>
 </html>

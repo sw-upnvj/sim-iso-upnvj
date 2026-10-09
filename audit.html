@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit - Sistem Informasi Manajemen ISO UPNVJ</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="assets/img/logo-upn.png" alt="UPNVJ">
+        <div class="sidebar-brand-text">
+          ISO UPNVJ
+          <small>Sistem Informasi Manajemen</small>
+        </div>
+      </div>
+    </div>
+    
+    <nav class="sidebar-menu">
+      <div class="sidebar-section-title">Menu Utama</div>
+      <a href="dashboard.html"><span class="sidebar-menu-icon">🏠</span> Dashboard</a>
+      <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;"><span class="sidebar-menu-icon">✅</span> Verifikasi</a>
+      <a href="audit.html" class="active"><span class="sidebar-menu-icon">🔍</span> Audit</a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
+      <a href="rekap.html"><span class="sidebar-menu-icon">📊</span> Rekap</a>
+      <a href="manage-user.html" id="sidebar-manage-user" style="display:none;"><span class="sidebar-menu-icon">👥</span> Kelola User</a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Sistem</div>
+      <a href="#" onclick="logout();return false;"><span class="sidebar-menu-icon">🚪</span> Logout</a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      Created by <strong>Pusat Sertifikasi dan Akreditasi Internasional LPMPP</strong>
+      <div style="margin-top:6px;">© 2026 UPN "Veteran" Jakarta</div>
+    </div>
+  </aside>
+  
+  <!-- MAIN AREA -->
+  <main class="main-area">
+    
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-page-title" id="page-title">Audit Dokumen</div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-info-name" id="user-name">Memuat...</div>
+            <div class="user-info-role" id="user-role">-</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+    
+    <div class="content">
+      
+      <!-- ========== SECTION A: LIST PRODI ========== -->
+      <div id="section-a">
+        <div class="page-header">
+          <div class="page-header-content">
+            <div>
+              <h1>🔍 Audit Dokumen ISO</h1>
+              <p>Pilih prodi untuk di-audit, atau review RTL tahun lalu</p>
+            </div>
+            <div class="page-header-actions">
+              <button class="btn" onclick="loadProdiList(true)">🔄 Refresh</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-card-icon green">🏛️</div></div>
+            <div class="stat-card-value" id="stat-total-prodi">-</div>
+            <div class="stat-card-label">Total Prodi</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-card-icon amber">⚠️</div></div>
+            <div class="stat-card-value" id="stat-rtl">-</div>
+            <div class="stat-card-label">Prodi dengan RTL</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-card-icon mint">📊</div></div>
+            <div class="stat-card-value" id="stat-avg-skor">-</div>
+            <div class="stat-card-label">Rata-rata Skor</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-card-icon" style="background:rgba(5,150,105,0.12);">✅</div></div>
+            <div class="stat-card-value" id="stat-100">-</div>
+            <div class="stat-card-label">Prodi Skor 100%</div>
+          </div>
+        </div>
+        
+        <div class="table-card">
+          <div class="table-card-header">
+            <div class="table-card-title">📋 Daftar Prodi</div>
+            <div class="table-filters">
+              <input type="text" id="filter-search" placeholder="Cari prodi..." oninput="renderProdi()">
+              <select id="filter-rtl" onchange="renderProdi()">
+                <option value="">Semua Prodi</option>
+                <option value="rtl">Prodi dengan RTL</option>
+                <option value="non-rtl">Prodi Tanpa RTL</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="prodi-container" style="padding:16px;">
+            <div class="loading"><span class="spinner"></span> Memuat daftar prodi...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ========== SECTION B: AUDIT PER PRODI ========== -->
+      <div id="section-b" style="display:none;">
+        <div class="page-header">
+          <div class="page-header-content">
+            <div>
+              <h1 id="audit-title">🔍 Audit Prodi</h1>
+              <p id="audit-subtitle">-</p>
+            </div>
+            <div class="page-header-actions">
+              <button class="btn" onclick="backToSectionA()">← Kembali ke Daftar Prodi</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="table-card" style="margin-bottom:24px;">
+          <div class="table-card-header">
+            <div class="table-card-title">📋 Dokumen Prodi</div>
+          </div>
+          <div id="audit-docs-container" style="padding:16px;">
+            <div class="loading"><span class="spinner"></span> Memuat dokumen...</div>
+          </div>
+        </div>
+        
+        <div class="card" id="summary-card" style="display:none;">
+          <div class="card-header">
+            <h2>📝 3 Poin Umum Audit</h2>
+          </div>
+          <div style="margin-top:16px;">
+            <div class="form-group">
+              <label style="color:#92400E;">🔍 Temuan Audit</label>
+              <textarea id="input-temuan" rows="4" placeholder="Temuan audit secara keseluruhan pada prodi ini..."></textarea>
+            </div>
+            <div class="form-group">
+              <label style="color:#1E40AF;">🔧 Rekomendasi Perbaikan</label>
+              <textarea id="input-perbaikan" rows="4" placeholder="Rekomendasi strategis perbaikan..."></textarea>
+            </div>
+            <div class="form-group">
+              <label style="color:#065F46;">📈 Rekomendasi Peningkatan</label>
+              <textarea id="input-peningkatan" rows="4" placeholder="Rekomendasi strategis peningkatan..."></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+              <button class="btn btn-primary" onclick="saveSummary()" id="btn-save-summary">💾 Simpan 3 Poin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ========== SECTION C: REVIEW RTL ========== -->
+      <div id="section-c" style="display:none;">
+        <div class="page-header">
+          <div class="page-header-content">
+            <div>
+              <h1 id="rtl-title">📋 Review RTL 2025</h1>
+              <p>Review dokumen RTL dari auditee & beri penilaian</p>
+            </div>
+            <div class="page-header-actions">
+              <button class="btn" onclick="backToSectionA()">← Kembali ke Daftar Prodi</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h2>📄 Dokumen RTL</h2>
+          </div>
+          <div id="rtl-doc-container" style="padding:16px 0;">
+            <div class="loading"><span class="spinner"></span> Memuat dokumen RTL...</div>
+          </div>
+        </div>
+        
+        <div class="card" id="rtl-assessment-card" style="display:none;">
+          <div class="card-header">
+            <h2>📝 Penilaian Auditor</h2>
+          </div>
+          <div style="margin-top:16px;">
+            <div class="form-group">
+              <label>Status RTL</label>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;background:#D1FAE5;border-radius:8px;">
+                  <input type="radio" name="status-rtl" value="selesai" style="width:auto;">
+                  <strong style="color:#065F46;">✅ RTL sudah diselesaikan</strong>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;background:#FEF3C7;border-radius:8px;">
+                  <input type="radio" name="status-rtl" value="belum_sesuai" style="width:auto;">
+                  <strong style="color:#92400E;">⚠️ RTL belum sesuai</strong>
+                </label>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>Catatan Auditor</label>
+              <textarea id="input-catatan-rtl" rows="4" placeholder="Penjelasan penilaian RTL..."></textarea>
+            </div>
+            
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="saveRtlAssessment()" id="btn-save-rtl">💾 Simpan Penilaian RTL</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: Audit Per Dokumen -->
+<div class="modal-overlay" id="modal-audit-doc">
+  <div class="modal" style="max-width:600px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 id="modal-audit-title" style="margin:0;">Audit Dokumen</h3>
+      <button onclick="closeAuditModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6B7280;">×</button>
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Link Dokumen</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a id="modal-audit-link" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;flex:1;"></a>
+        <a id="modal-audit-link-btn" href="#" target="_blank" class="btn btn-primary btn-sm">🔗 Buka</a>
+      </div>
+    </div>
+    
+    <div id="modal-ver-container" style="margin-bottom:16px;">
+      <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Catatan Verifikator</div>
+      <div style="padding:12px;background:#DBEAFE;border-left:4px solid #2563EB;border-radius:8px;font-size:13px;color:#1E40AF;" id="modal-ver-catatan"></div>
+    </div>
+    
+    <div class="form-group">
+      <label>Catatan Auditor</label>
+      <textarea id="modal-catatan" rows="4" placeholder="Catatan hasil audit konten dokumen..."></textarea>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeAuditModal()">Batal</button>
+      <button class="btn btn-danger" onclick="submitAuditFail()" id="btn-audit-fail">❌ Tidak Lolos</button>
+      <button class="btn btn-primary" onclick="submitAuditPass()" id="btn-audit-pass">✅ Lolos</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/audit.js"></script>
+
+</body>
+</html>

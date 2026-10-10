@@ -245,6 +245,7 @@ function renderDocs() {
     const statusBadge = getStatusBadge(doc.status);
     const hasSubs = doc.hasSubs === true;
     const isAuditee = currentUser.role === 'auditee';
+    const isRTL = doc.kategori === 'B';
     
     // ===== Kategori Badge =====
     let kategoriBadge;
@@ -261,7 +262,20 @@ function renderDocs() {
     
     if (hasSubs) {
       actions.push(`<button class="btn btn-secondary btn-sm" onclick="toggleSubs('${doc.docID}')" id="btn-toggle-${doc.docID}">📂 Detail</button>`);
+    } else if (isRTL) {
+      // ===== RTL: tombol "Lihat" (link dari admin) =====
+      if (doc.link) {
+        actions.push(`<a href="${escapeHtml(doc.link)}" target="_blank" class="btn btn-primary btn-sm">🔗 Lihat</a>`);
+      } else {
+        actions.push(`<button class="btn btn-secondary btn-sm" onclick="alert('Link RTL belum diatur oleh administrator.\\n\\nSilakan hubungi admin ISO.')">🔗 Lihat RTL</button>`);
+      }
+      
+      // Tombol catatan (kalau ada catatan dari verifikator/auditor)
+      if (doc.status !== 'kosong' && doc.status !== 'draft' && (doc.verifikator_catatan || doc.auditor_catatan)) {
+        actions.push(`<button class="btn btn-sm" style="background:#6B7280;color:white;" onclick="showDetail('${doc.docID}')">📝 Catatan</button>`);
+      }
     } else {
+      // ===== DOKUMEN BIASA: alur seperti sebelumnya =====
       if (isAuditee && (doc.status === 'kosong' || doc.status === 'draft')) {
         actions.push(`<button class="btn btn-primary btn-sm" onclick="openInput('${doc.docID}')">Isi</button>`);
       }

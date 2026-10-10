@@ -3,89 +3,291 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - ISO UPNVJ</title>
+  <title>Dashboard - Sistem Informasi Manajemen ISO UPNVJ</title>
   <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-<!-- Navbar -->
-<div class="navbar">
-  <div class="container">
-    <div class="navbar-brand">
-      📋 Sistem Input Dokumen ISO
-    </div>
-   <div class="navbar-user">
-     <a href="rekap.html" style="color:white;text-decoration:none;   opacity:0.9;font-size:14px;">Rekap</a>
-       <a href="manage-user.html" id="link-manage-user"     style="color:white;text-decoration:none;opacity:0.9;        font-size:14px;display:none;">Kelola User</a>
-      <span id="user-info">Memuat...</span>
-      <button onclick="logout()">Logout</button>
-    </div>
-  </div>
-</div>
+<div class="dashboard-layout">
 
-<!-- Main Content -->
-<div class="main-container">
-
-  <!-- Progress Card -->
-  <div class="card">
-    <div class="card-header">
-      <h2>📊 Progress Kesiapan Dokumen</h2>
-      <span id="year-badge" class="badge badge-info">Tahun -</span>
-    </div>
-    <div class="progress-section">
-      <div class="progress-stats">
-        <div>
-          <strong id="progress-count">0/0</strong> dokumen tersedia
-        </div>
-        <div>
-          <strong id="progress-percent">0%</strong> selesai
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="assets/img/logo-upn.png" alt="UPNVJ">
+        <div class="sidebar-brand-text">
+          ISO UPNVJ
+          <small>Sistem Informasi Manajemen</small>
         </div>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+    
+    <nav class="sidebar-menu">
+      <div class="sidebar-section-title">Menu Utama</div>
+      <a href="dashboard.html" class="active">
+        <span class="sidebar-menu-icon">🏠</span>
+        Dashboard
+      </a>
+      
+      <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;">
+        <span class="sidebar-menu-icon">✅</span>
+        Verifikasi
+      </a>
+      
+      <a href="audit.html" id="sidebar-audit" style="display:none;">
+        <span class="sidebar-menu-icon">🔍</span>
+        Audit
+      </a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
+      <a href="rekap.html">
+        <span class="sidebar-menu-icon">📊</span>
+        Rekap
+      </a>
+      <a href="manage-user.html" id="sidebar-manage-user" style="display:none;">
+        <span class="sidebar-menu-icon">👥</span>
+        Kelola User
+      </a>
+      <a href="manage-rtl.html" id="sidebar-manage-rtl" style="display:none;">
+        <span class="sidebar-menu-icon">🔗</span>
+        Kelola Link RTL
+      </a>
+      
+      <div class="sidebar-section-title" style="margin-top:12px;">Sistem</div>
+      <a href="#" onclick="logout();return false;">
+        <span class="sidebar-menu-icon">🚪</span>
+        Logout
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      Created by <strong>Pusat Sertifikasi dan Akreditasi Internasional LPMPP</strong>
+      <div style="margin-top:6px;">© 2026 UPN "Veteran" Jakarta</div>
+    </div>
+  </aside>
+  
+  <!-- MAIN AREA -->
+  <main class="main-area">
+    
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-page-title">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-info-name" id="user-name">Memuat...</div>
+            <div class="user-info-role" id="user-role">-</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
       </div>
     </div>
-  </div>
-
-  <!-- Daftar Dokumen -->
-  <div class="card">
-    <div class="card-header">
-      <h2>📁 Daftar Dokumen</h2>
-    </div>
-
-    <!-- Filter -->
-    <div class="filters">
-  <div id="subsatker-filter" style="display:none;">
-    <label>Subsatker:</label>
-    <select id="filter-subsatker" onchange="onSubsatkerChange()">
-      <option value="">-- Pilih Subsatker --</option>
-    </select>
-  </div>
-  <label>Filter:</label>
-  <select id="filter-kategori" onchange="renderDocs()">
-    <option value="">Semua Kategori</option>
-    <option value="A">Kategori A (70%)</option>
-    <option value="B">Kategori B (30%)</option>
-  </select>
-  <select id="filter-status" onchange="renderDocs()">
-    <option value="">Semua Status</option>
-    <option value="tersedia">✅ Tersedia</option>
-    <option value="kosong">❌ Belum Diisi</option>
-  </select>
-  <input type="text" id="filter-search" placeholder="Cari nama dokumen..." oninput="renderDocs()">
-</div>
-
-    <!-- Table -->
-    <div class="table-wrapper" id="table-container">
-      <div class="loading">
-        <span class="spinner"></span> Memuat data...
+    
+    <div class="content">
+      
+      <!-- Welcome Card -->
+      <div class="welcome-card">
+        <div class="welcome-card-content">
+          <h2>Selamat datang, <span id="welcome-name">User</span>! 👋</h2>
+          <p id="welcome-subtitle">Silakan lengkapi dokumen ISO di bawah ini</p>
+        </div>
       </div>
+      
+      <!-- ===== RTL Card (khusus prodi dengan RTL) ===== -->
+      <div class="card" id="rtl-card" style="display:none;background:linear-gradient(135deg,#FEF3C7 0%,#FFFBEB 100%);border-left:4px solid #D97706;margin-bottom:20px;">
+        <div class="card-header" style="border-bottom:1px solid #FDE68A;">
+          <h2 style="color:#92400E;">⚠️ Penyelesaian RTL Temuan 2025</h2>
+          <span class="badge badge-warning">Butuh Tindakan</span>
+        </div>
+        <div style="margin-top:16px;">
+          <p style="font-size:14px;color:#78350F;line-height:1.6;margin-bottom:16px;">
+            Silakan lengkapi dokumen <strong>Penyelesaian RTL Temuan 2025</strong> di link yang sudah disiapkan administrator.
+          </p>
+          
+          <div style="background:white;padding:14px;border-radius:8px;margin-bottom:16px;">
+            <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">🔗 Link RTL dari Administrator</div>
+            <a id="rtl-link-url" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;display:block;margin-bottom:12px;">-</a>
+          </div>
+          
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a id="btn-rtl-open" href="#" target="_blank" class="btn btn-primary" style="background:#D97706;">
+              🔗 Buka Link RTL
+            </a>
+            <button id="btn-rtl-confirm" class="btn btn-primary" style="background:#059669;" onclick="confirmRtl()">
+              ✅ Konfirmasi Selesai
+            </button>
+          </div>
+          
+          <div id="rtl-status-info" style="margin-top:12px;font-size:13px;color:#78350F;"></div>
+        </div>
+      </div>
+      
+      <!-- ===== Audit Result Card (khusus prodi yang di-tampilkan hasil audit) ===== -->
+      <div class="card" id="audit-result-card" style="display:none;background:linear-gradient(135deg,#D1FAE5 0%,#F0FDF4 100%);border-left:4px solid #059669;margin-bottom:20px;">
+        <div class="card-header" style="border-bottom:1px solid #A7F3D0;">
+          <h2 style="color:#065F46;">🎉 Hasil Audit 2026</h2>
+          <span class="badge badge-success">Tersedia</span>
+        </div>
+        <div style="margin-top:16px;">
+          <p style="font-size:14px;color:#064E3B;line-height:1.6;margin-bottom:16px;">
+            Hasil audit untuk prodi Anda sudah tersedia. Silakan buka link di bawah untuk melihat detail temuan & rekomendasi.
+          </p>
+          
+          <div style="background:white;padding:14px;border-radius:8px;margin-bottom:16px;">
+            <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">🔗 Link Hasil Audit</div>
+            <a id="audit-link-url" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;display:block;margin-bottom:12px;">-</a>
+          </div>
+          
+          <a id="btn-audit-open" href="#" target="_blank" class="btn btn-primary" style="background:#059669;">
+            📋 Lihat Hasil Audit
+          </a>
+        </div>
+      </div>
+      
+      <!-- ===== Stat Cards (5) ===== -->
+      <div class="stats-grid" style="grid-template-columns:repeat(5, 1fr);">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon green">📄</div>
+          </div>
+          <div class="stat-card-value" id="stat-total">0</div>
+          <div class="stat-card-label">Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon mint">📤</div>
+          </div>
+          <div class="stat-card-value" id="stat-tersedia">0</div>
+          <div class="stat-card-label">Tersedia</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon" style="background:rgba(5,150,105,0.12);">✅</div>
+          </div>
+          <div class="stat-card-value" id="stat-verified">0</div>
+          <div class="stat-card-label">Verified</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon amber">⏳</div>
+          </div>
+          <div class="stat-card-value" id="stat-kosong">0</div>
+          <div class="stat-card-label">Belum Diisi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon lime">📊</div>
+          </div>
+          <div class="stat-card-value" id="stat-progress">0%</div>
+          <div class="stat-card-label">Progress</div>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="progress-card">
+        <div class="progress-card-header">
+          <div class="progress-card-title">Progress Kelengkapan Dokumen</div>
+          <div class="progress-card-value" id="progress-value">0%</div>
+        </div>
+        <div class="progress-bar-large">
+          <div class="progress-fill-large" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      
+      <!-- Chart Section -->
+      <div class="card" id="chart-section" style="margin-bottom:20px;">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+          <h2>📊 Ringkasan Kesiapan ISO 2026</h2>
+          <div class="chart-toggle" style="display:flex;gap:8px;background:#F3F4F6;padding:4px;border-radius:8px;">
+            <button class="chart-toggle-btn active" onclick="switchChart('bar')" id="btn-chart-bar">📊 Bar</button>
+            <button class="chart-toggle-btn" onclick="switchChart('donut')" id="btn-chart-donut">🍩 Donut</button>
+          </div>
+        </div>
+        
+        <div id="chart-bar-container" style="padding:20px 0;">
+          <canvas id="chart-bar" style="max-height:400px;"></canvas>
+        </div>
+        
+        <div id="chart-donut-container" style="display:none;padding:20px 0;">
+          <div style="display:flex;justify-content:center;align-items:center;gap:40px;flex-wrap:wrap;">
+            <canvas id="chart-donut" style="max-height:300px;max-width:300px;"></canvas>
+            <div id="chart-donut-legend" style="min-width:200px;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section 3 Poin Umum -->
+      <div class="card" id="audit-summary-card" style="display:none;margin-bottom:20px;">
+        <div class="card-header">
+          <h2>📋 Catatan Umum dari Auditor</h2>
+          <span class="badge badge-info">Per Subsatker</span>
+        </div>
+        <div style="display:grid;gap:16px;margin-top:16px;">
+          <div style="padding:16px;background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;">
+            <div style="font-weight:700;color:#92400E;font-size:13px;margin-bottom:6px;">🔍 TEMUAN AUDIT</div>
+            <div id="summary-temuan" style="color:#374151;font-size:14px;line-height:1.6;"></div>
+          </div>
+          <div style="padding:16px;background:#DBEAFE;border-left:4px solid #2563EB;border-radius:8px;">
+            <div style="font-weight:700;color:#1E40AF;font-size:13px;margin-bottom:6px;">🔧 REKOMENDASI PERBAIKAN</div>
+            <div id="summary-perbaikan" style="color:#374151;font-size:14px;line-height:1.6;"></div>
+          </div>
+          <div style="padding:16px;background:#D1FAE5;border-left:4px solid #059669;border-radius:8px;">
+            <div style="font-weight:700;color:#065F46;font-size:13px;margin-bottom:6px;">📈 REKOMENDASI PENINGKATAN</div>
+            <div id="summary-peningkatan" style="color:#374151;font-size:14px;line-height:1.6;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Table Card -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <div class="table-card-title">📁 Daftar Dokumen</div>
+          <div class="table-filters">
+            <select id="filter-subsatker" onchange="onSubsatkerChange()" style="display:none;">
+              <option value="">-- Pilih Subsatker --</option>
+            </select>
+            <select id="filter-kategori" onchange="renderDocs()">
+              <option value="">Semua Kategori</option>
+              <option value="A">Kategori A (70%)</option>
+              <option value="B">Kategori B (30%)</option>
+            </select>
+            <select id="filter-status" onchange="renderDocs()">
+              <option value="">Semua Status</option>
+              <option value="tersedia">✅ Tersedia</option>
+              <option value="kosong">❌ Belum Diisi</option>
+            </select>
+            <input type="text" id="filter-search" placeholder="Cari dokumen..." oninput="renderDocs()">
+          </div>
+        </div>
+        
+        <div class="table-wrapper" id="table-container">
+          <div class="loading">
+            <span class="spinner"></span> Memuat data...
+          </div>
+        </div>
+      </div>
+      
     </div>
-  </div>
-
+    
+  </main>
+  
 </div>
 
-<!-- Scripts -->
+<!-- Modal Detail -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal" style="max-width:600px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 id="modal-detail-title" style="margin:0;">Detail Dokumen</h3>
+      <button onclick="closeDetailModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6B7280;">×</button>
+    </div>
+    
+    <div id="modal-detail-content"></div>
+  </div>
+</div>
+
 <script src="assets/js/config.js"></script>
 <script src="assets/js/api.js"></script>
 <script src="assets/js/dashboard.js"></script>

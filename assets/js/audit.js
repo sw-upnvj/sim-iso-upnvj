@@ -1,5 +1,5 @@
 // ============================================
-// audit.js - Logic halaman auditor (Section A/B)
+// audit.js - Logic halaman auditor (Section A/B/C)
 // ============================================
 
 let currentUser = null;
@@ -62,12 +62,14 @@ async function loadProdiList(forceRefresh = false) {
   
   allProdi = result.data || [];
   
-  const totalProdi = allProdi.length;
+    const totalProdi = allProdi.length;
   const rtlCount = allProdi.filter(p => p.hasRtl).length;
   const avgSkor = totalProdi > 0 
     ? Math.round(allProdi.reduce((s, p) => s + p.skor, 0) / totalProdi * 10) / 10 
     : 0;
-  const prodi100 = allProdi.filter(p => p.skor === 100).length;
+  
+  // ===== Hitung satker yang punya minimal 1 dokumen verified =====
+  const satkerVerified = allProdi.filter(p => p.verified > 0).length;
   
   const elTotalProdi = document.getElementById('stat-total-prodi');
   const elRtl = document.getElementById('stat-rtl');
@@ -77,7 +79,7 @@ async function loadProdiList(forceRefresh = false) {
   if (elTotalProdi) elTotalProdi.textContent = totalProdi;
   if (elRtl) elRtl.textContent = rtlCount;
   if (elAvg) elAvg.textContent = avgSkor + '%';
-  if (el100) el100.textContent = prodi100;
+  if (el100) el100.textContent = satkerVerified;
   
   renderProdi();
 }
@@ -122,7 +124,7 @@ function renderProdi() {
               ${p.verified}/${p.total} dokumen verified · Skor: 
               <strong style="color:${skorColor};">${p.skor}%</strong>
             </div>
-            ${p.hasRtl ? `<div style="margin-top:8px;"><span class="badge badge-warning">⚠️ Prodi dengan RTL 2025</span>${p.rtlAssessed ? `<span class="badge badge-info" style="margin-left:6px;">RTL: ${p.rtlStatus === 'selesai' ? '✅ Selesai' : '⚠️ Belum Sesuai'}</span>` : ''}</div>` : ''}
+            ${p.hasRtl ? `<div style="margin-top:8px;"><span class="badge badge-warning">⚠️ Satker dengan RTL 2025</span>${p.rtlAssessed ? `<span class="badge badge-info" style="margin-left:6px;">RTL: ${p.rtlStatus === 'selesai' ? '✅ Selesai' : '⚠️ Belum Sesuai'}</span>` : ''}</div>` : ''}
           </div>
           
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -194,10 +196,12 @@ async function openAudit(subsatker) {
       document.querySelectorAll('input[name="status-rtl"]').forEach(r => {
         r.checked = r.value === data.rtl_assessment.status_rtl;
       });
-      document.getElementById('input-catatan-rtl').value = data.rtl_assessment.catatan_rtl || '';
+      const catatanEl = document.getElementById('input-catatan-rtl');
+      if (catatanEl) catatanEl.value = data.rtl_assessment.catatan_rtl || '';
     } else {
       document.querySelectorAll('input[name="status-rtl"]').forEach(r => r.checked = false);
-      document.getElementById('input-catatan-rtl').value = '';
+      const catatanEl = document.getElementById('input-catatan-rtl');
+      if (catatanEl) catatanEl.value = '';
     }
   } else if (rtlCard) {
     rtlCard.style.display = 'none';
@@ -213,7 +217,7 @@ async function openAudit(subsatker) {
           <tr>
             <th style="width:50px;">No</th>
             <th>Nama Dokumen</th>
-            <th style="width:150px;">Status</th>
+            <th style="width:180px;">Status</th>
             <th style="width:200px;">Aksi</th>
           </tr>
         </thead>
@@ -437,22 +441,34 @@ async function openRtl(subsatker) {
   document.getElementById('rtl-assessment-card').style.display = 'block';
   
   if (data.assessment) {
-    const radios = document.querySelectorAll('input[name="status-rtl"]');
+    const radios = document.querySelectorAll('input[name="status-rtl-c"]');
     radios.forEach(r => {
       r.checked = r.value === data.assessment.status_rtl;
     });
-    document.getElementById('input-catatan-rtl').value = data.assessment.catatan_rtl || '';
+    const catatanEl = document.getElementById('input-catatan-rtl-c');
+    if (catatanEl) catatanEl.value = data.assessment.catatan_rtl || '';
   } else {
-    document.querySelectorAll('input[name="status-rtl"]').forEach(r => r.checked = false);
-    document.getElementById('input-catatan-rtl').value = '';
+    document.querySelectorAll('input[name="status-rtl-c"]').forEach(r => r.checked = false);
+    const catatanEl = document.getElementById('input-catatan-rtl-c');
+    if (catatanEl) catatanEl.value = '';
   }
 }
 
+// ============================================
+// SAVE RTL ASSESSMENT — Section B (Audit Full)
+// ============================================
 async function saveRtlAssessment() {
   const statusRtl = document.querySelector('input[name="status-rtl"]:checked');
   
   if (!statusRtl) {
     showToast('Pilih status RTL terlebih dahulu', 'error');
+    return;
+  }
+  
+  const catatanRtl = document.getElementById('input-catatan-rtl').value.trim();
+  
+  if (!catatanRtl) {
+    showToast('Catatan wajib diisi', 'error');
     return;
   }
   
@@ -465,7 +481,7 @@ async function saveRtlAssessment() {
   const result = await callAPI('saveRtlAssessment', {
     subsatker: currentProdi,
     status_rtl: statusRtl.value,
-    catatan_rtl: document.getElementById('input-catatan-rtl').value.trim()
+    catatan_rtl: catatanRtl
   });
   
   if (btn) {
@@ -475,6 +491,49 @@ async function saveRtlAssessment() {
   
   if (result.success) {
     showToast('✅ ' + result.message);
+  } else {
+    showToast('❌ ' + result.message, 'error');
+  }
+}
+
+// ============================================
+// SAVE RTL ASSESSMENT — Section C (Review RTL page)
+// ============================================
+async function saveRtlAssessmentSectionC() {
+  const statusRtl = document.querySelector('input[name="status-rtl-c"]:checked');
+  
+  if (!statusRtl) {
+    showToast('Pilih status RTL terlebih dahulu', 'error');
+    return;
+  }
+  
+  const catatanRtl = document.getElementById('input-catatan-rtl-c').value.trim();
+  
+  if (!catatanRtl) {
+    showToast('Catatan wajib diisi', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('btn-save-rtl-c');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+  }
+  
+  const result = await callAPI('saveRtlAssessment', {
+    subsatker: currentProdi,
+    status_rtl: statusRtl.value,
+    catatan_rtl: catatanRtl
+  });
+  
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '💾 Simpan Penilaian RTL';
+  }
+  
+  if (result.success) {
+    showToast('✅ ' + result.message);
+    await loadProdiList(true);
   } else {
     showToast('❌ ' + result.message, 'error');
   }

@@ -96,18 +96,55 @@ async function loadDocs() {
   const container = document.getElementById('table-container');
   container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat data...</div>';
   
-  if ((currentUser.role === 'administrator' || currentUser.role === 'verifikator' || currentUser.role === 'auditor') && !selectedSubsatker) {
-    updateStats([]);
+  const isAdminOrStaff = currentUser.role === 'administrator' || 
+                          currentUser.role === 'verifikator' || 
+                          currentUser.role === 'auditor';
+  
+  // ============================================
+  // KALAU BELUM PILIH SUBSATKER (ADMIN/VERIF/AUDITOR)
+  // Tampilkan angka agregat semua satker
+  // ============================================
+  if (isAdminOrStaff && !selectedSubsatker) {
+    const aggregateResult = await callAPI('getRekap');
+    
+    if (aggregateResult.success && aggregateResult.data) {
+      let totalDocs = 0;
+      let totalVerified = 0;
+      
+      aggregateResult.data.forEach(item => {
+        totalDocs += item.total || 0;
+        totalVerified += item.verified || 0;
+      });
+      
+      const totalKosong = totalDocs - totalVerified;
+      const totalPercent = totalDocs > 0 ? Math.round((totalVerified / totalDocs) * 100) : 0;
+      
+      document.getElementById('stat-total').textContent = totalDocs;
+      document.getElementById('stat-tersedia').textContent = totalVerified;
+      document.getElementById('stat-verified').textContent = totalVerified;
+      document.getElementById('stat-kosong').textContent = totalKosong;
+      document.getElementById('stat-progress').textContent = totalPercent + '%';
+      
+      document.getElementById('progress-value').textContent = totalPercent + '%';
+      document.getElementById('progress-fill').style.width = totalPercent + '%';
+    } else {
+      updateStats([]);
+    }
+    
     document.getElementById('audit-summary-card').style.display = 'none';
     container.innerHTML = `
       <div class="empty-state">
         <div>👆</div>
         <p>Silakan pilih <strong>Subsatker</strong> terlebih dahulu di atas</p>
+        <p style="font-size:13px;color:#6B7280;margin-top:8px;">Angka di atas menunjukkan total seluruh subsatker</p>
       </div>
     `;
     return;
   }
   
+  // ============================================
+  // KALAU SUDAH PILIH SUBSATKER (atau role = auditee)
+  // ============================================
   const payload = {};
   if (selectedSubsatker) payload.subsatker = selectedSubsatker;
   
@@ -235,7 +272,7 @@ function renderDocs() {
           <th>Nama Dokumen</th>
           <th style="width:110px;">Kategori</th>
           <th style="width:180px;">Status</th>
-          <th style="width:150px;">Aksi</th>
+          <th style="width:220px;">Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -275,15 +312,33 @@ function renderDocs() {
         actions.push(`<button class="btn btn-sm" style="background:#6B7280;color:white;" onclick="showDetail('${doc.docID}')">📝 Catatan</button>`);
       }
     } else {
-      // ===== DOKUMEN BIASA: alur seperti sebelumnya =====
-      if (isAuditee && (doc.status === 'kosong' || doc.status === 'draft')) {
+      // ===== DOKUMEN BIASA =====
+      const canEdit = isAuditee && ['kosong', 'draft', 'submitted', 'rejected', 'audited_fail'].indexOf(doc.status) !== -1;
+      const canFillNew = isAuditee && (doc.status === 'kosong' || doc.status === 'draft');
+      
+      // Tombol "Isi" (kalau belum ada link)
+      if (canFillNew) {
         actions.push(`<button class="btn btn-primary btn-sm" onclick="openInput('${doc.docID}')">Isi</button>`);
       }
       
+      // Tombol "Lihat" (kalau sudah ada link)
       if (doc.link) {
-        actions.push(`<a href="${escapeHtml(doc.link)}" target="_blank" class="btn btn-secondary btn-sm">Lihat</a>`);
+        actions.push(`<a href="${escapeHtml(doc.link)}" target="_blank" class="btn btn-secondary btn-sm">🔗 Lihat</a>`);
       }
       
+      // Tombol "Edit" (kalau sudah submit/reject/fail — boleh revisi)
+      if (canEdit && doc.link && doc.status !== 'kosong' && doc.status !== 'draft') {
+        const isRevisi = doc.status === 'rejected' || doc.status === 'audited_fail';
+        if (isRevisi) {
+          // Untuk dokumen revisi: tombol "Submit Revisi" (tanpa ubah link) + "Edit Link"
+          actions.push(`<button class="btn btn-sm" style="background:#059669;color:white;" onclick="submitRevisi('${doc.docID}')">🔄 Submit Revisi</button>`);
+          actions.push(`<button class="btn btn-sm" style="background:#D97706;color:white;" onclick="openInput('${doc.docID}')">✏️ Edit Link</button>`);
+        } else {
+          actions.push(`<button class="btn btn-sm" style="background:#D97706;color:white;" onclick="openInput('${doc.docID}')">✏️ Edit</button>`);
+        }
+      }
+      
+      // Tombol "Catatan"
       if (doc.status !== 'kosong' && doc.status !== 'draft' && (doc.verifikator_catatan || doc.auditor_catatan)) {
         actions.push(`<button class="btn btn-sm" style="background:#6B7280;color:white;" onclick="showDetail('${doc.docID}')">📝 Catatan</button>`);
       }
@@ -312,12 +367,25 @@ function renderDocs() {
         const subStatus = getStatusBadge(sub.status);
         const subActions = [];
         
-        if (isAuditee && (sub.status === 'kosong' || sub.status === 'draft')) {
+        const subCanEdit = isAuditee && ['kosong', 'draft', 'submitted', 'rejected', 'audited_fail'].indexOf(sub.status) !== -1;
+        const subCanFillNew = isAuditee && (sub.status === 'kosong' || sub.status === 'draft');
+        
+        if (subCanFillNew) {
           subActions.push(`<button class="btn btn-primary btn-sm" onclick="openInput('${sub.docID}')">Isi</button>`);
         }
         
         if (sub.link) {
-          subActions.push(`<a href="${escapeHtml(sub.link)}" target="_blank" class="btn btn-secondary btn-sm">Lihat</a>`);
+          subActions.push(`<a href="${escapeHtml(sub.link)}" target="_blank" class="btn btn-secondary btn-sm">🔗 Lihat</a>`);
+        }
+        
+        if (subCanEdit && sub.link && sub.status !== 'kosong' && sub.status !== 'draft') {
+          const subIsRevisi = sub.status === 'rejected' || sub.status === 'audited_fail';
+          if (subIsRevisi) {
+            subActions.push(`<button class="btn btn-sm" style="background:#059669;color:white;" onclick="submitRevisi('${sub.docID}')">🔄</button>`);
+            subActions.push(`<button class="btn btn-sm" style="background:#D97706;color:white;" onclick="openInput('${sub.docID}')">✏️</button>`);
+          } else {
+            subActions.push(`<button class="btn btn-sm" style="background:#D97706;color:white;" onclick="openInput('${sub.docID}')">✏️</button>`);
+          }
         }
         
         if (sub.status !== 'kosong' && sub.status !== 'draft' && (sub.verifikator_catatan || sub.auditor_catatan)) {
@@ -446,17 +514,40 @@ function closeDetailModal() {
 }
 
 // ============================================
-// OPEN INPUT (Isi Link)
+// OPEN INPUT (Isi / Edit Link)
 // ============================================
 function openInput(docID) {
-  const doc = allDocs.find(d => d.docID === docID);
+  // Cari dokumen di parent
+  let doc = allDocs.find(d => d.docID === docID);
+  
+  // Kalau tidak ada, cari di sub
+  if (!doc) {
+    for (const parent of allDocs) {
+      if (parent.subs) {
+        const sub = parent.subs.find(s => s.docID === docID);
+        if (sub) { doc = sub; break; }
+      }
+    }
+  }
+  
   if (!doc) return;
   
-  const link = prompt(`Masukkan link Google Drive untuk:\n\n${doc.nama_dokumen}\n\nFormat: https://drive.google.com/... atau https://docs.google.com/...`, doc.link || '');
+  const isEdit = doc.link && doc.status !== 'kosong' && doc.status !== 'draft';
+  const judulPrompt = isEdit ? '✏️ EDIT LINK' : 'ISI LINK';
+  const pesanPrompt = isEdit 
+    ? `Anda akan MENGUBAH link untuk:\n\n${doc.nama_dokumen}\n\nLink saat ini:\n${doc.link}\n\nKalau diubah, status kembali ke "submitted".`
+    : `Masukkan link Google Drive:\n\n${doc.nama_dokumen}\n\nFormat: https://drive.google.com/... atau https://docs.google.com/...`;
+  
+  const link = prompt(`${judulPrompt}\n\n${pesanPrompt}`, doc.link || '');
   
   if (link === null) return;
   if (!link.trim()) {
     showToast('Link tidak boleh kosong', 'error');
+    return;
+  }
+  
+  if (link.trim() === doc.link) {
+    showToast('Link tidak berubah', 'error');
     return;
   }
   
@@ -709,37 +800,97 @@ async function loadRtlInfo() {
     return;
   }
   
-  const link = result.data.link_rtl;
+   const link = result.data.link_rtl;
+  const rtlStatus = result.data.rtl_status || 'kosong';
+  const auditorCatatan = result.data.auditor_catatan || '';
+  const verifikatorCatatan = result.data.verifikator_catatan || '';
+  const auditorEmail = result.data.auditor_email || '';
   
   document.getElementById('rtl-link-url').textContent = link;
   document.getElementById('rtl-link-url').href = link;
   document.getElementById('btn-rtl-open').href = link;
   
-  const docID = findRtlDocID();
-  if (docID) {
-    const rtlDoc = allDocs.find(d => d.docID === docID);
-    if (rtlDoc) {
-      const statusInfo = document.getElementById('rtl-status-info');
-      const btn = document.getElementById('btn-rtl-confirm');
-      
-      if (rtlDoc.status === 'verified') {
-        statusInfo.innerHTML = '<span style="color:#059669;font-weight:700;">✅ Sudah diverifikasi</span>';
-        btn.disabled = true;
-        btn.style.background = '#9CA3AF';
-        btn.style.cursor = 'not-allowed';
-        btn.textContent = '✅ Sudah Terverifikasi';
-      } else if (rtlDoc.status === 'submitted') {
-        statusInfo.innerHTML = '<span style="color:#1E40AF;font-weight:700;">📤 Menunggu verifikasi</span>';
-        btn.disabled = true;
-        btn.style.background = '#9CA3AF';
-        btn.style.cursor = 'not-allowed';
-        btn.textContent = '📤 Menunggu Verifikasi';
-      } else if (rtlDoc.status === 'rejected') {
-        statusInfo.innerHTML = '<span style="color:#DC2626;font-weight:700;">❌ Ditolak — perlu perbaikan</span>';
-      } else {
-        statusInfo.innerHTML = '<span style="color:#D97706;font-weight:700;">⏳ Belum dikonfirmasi</span>';
-      }
+  const statusInfo = document.getElementById('rtl-status-info');
+  const btn = document.getElementById('btn-rtl-confirm');
+  const header = card.querySelector('h2');
+  
+  // ============================================
+  // TAMPILKAN STATUS SESUAI KONDISI
+  // ============================================
+  
+  if (rtlStatus === 'audited_pass') {
+    // Sudah lolos audit
+    card.querySelector('.badge').textContent = '✅ Selesai';
+    card.querySelector('.badge').className = 'badge badge-success';
+    if (header) header.textContent = '✅ RTL Sudah Lolos Audit';
+    statusInfo.innerHTML = '<span style="color:#059669;font-weight:700;">✅ RTL sudah lolos audit — tidak perlu tindakan</span>';
+    btn.style.display = 'none';
+    
+    // Sembunyikan text "Silakan lengkapi dokumen"
+    const descEl = card.querySelector('p');
+    if (descEl) descEl.textContent = 'RTL untuk prodi/satker Anda sudah lolos audit. Terima kasih.';
+    
+  } else if (rtlStatus === 'verified') {
+    // Sudah diverifikasi
+    card.querySelector('.badge').textContent = '⏳ Menunggu Audit';
+    card.querySelector('.badge').className = 'badge badge-info';
+    if (header) header.textContent = '📋 RTL Sudah Diverifikasi';
+    statusInfo.innerHTML = '<span style="color:#1E40AF;font-weight:700;">✅ Sudah diverifikasi — menunggu audit auditor</span>';
+    btn.disabled = true;
+    btn.style.background = '#9CA3AF';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = '✅ Sudah Diverifikasi';
+    
+  } else if (rtlStatus === 'submitted') {
+    // Menunggu verifikasi
+    card.querySelector('.badge').textContent = '⏳ Menunggu Verifikasi';
+    card.querySelector('.badge').className = 'badge badge-info';
+    statusInfo.innerHTML = '<span style="color:#1E40AF;font-weight:700;">📤 Menunggu verifikasi</span>';
+    btn.disabled = true;
+    btn.style.background = '#9CA3AF';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = '📤 Menunggu Verifikasi';
+    
+    } else if (rtlStatus === 'rejected' || rtlStatus === 'audited_fail') {
+    // Perlu perbaikan
+    card.querySelector('.badge').textContent = '⚠️ Perlu Perbaikan';
+    card.querySelector('.badge').className = 'badge badge-warning';
+    
+    // ===== TAMPILKAN CATATAN =====
+    let catatanHtml = '<span style="color:#DC2626;font-weight:700;">❌ Perlu perbaikan</span>';
+    
+    if (auditorCatatan) {
+      catatanHtml += `
+        <div style="margin-top:12px;padding:14px;background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;">
+          <div style="font-weight:700;color:#92400E;font-size:12px;margin-bottom:6px;">⚠️ CATATAN AUDITOR</div>
+          <div style="color:#374151;font-size:14px;line-height:1.6;">${escapeHtml(auditorCatatan)}</div>
+          ${auditorEmail ? `<div style="font-size:11px;color:#6B7280;margin-top:6px;">— ${escapeHtml(auditorEmail)}</div>` : ''}
+        </div>
+      `;
+    } else if (verifikatorCatatan) {
+      catatanHtml += `
+        <div style="margin-top:12px;padding:14px;background:#DBEAFE;border-left:4px solid #2563EB;border-radius:8px;">
+          <div style="font-weight:700;color:#1E40AF;font-size:12px;margin-bottom:6px;">✅ CATATAN VERIFIKATOR</div>
+          <div style="color:#374151;font-size:14px;line-height:1.6;">${escapeHtml(verifikatorCatatan)}</div>
+        </div>
+      `;
+    } else {
+      catatanHtml += '<div style="margin-top:8px;font-size:12px;color:#6B7280;">(Tidak ada catatan dari auditor/verifikator)</div>';
     }
+    
+    statusInfo.innerHTML = catatanHtml;
+    btn.disabled = false;
+    btn.style.background = '#059669';
+    btn.style.cursor = 'pointer';
+    btn.textContent = '✅ Konfirmasi Selesai';
+    
+  } else {
+    // Belum dikonfirmasi (kosong)
+    statusInfo.innerHTML = '<span style="color:#D97706;font-weight:700;">⏳ Belum dikonfirmasi</span>';
+    btn.disabled = false;
+    btn.style.background = '#059669';
+    btn.style.cursor = 'pointer';
+    btn.textContent = '✅ Konfirmasi Selesai';
   }
   
   card.style.display = 'block';
@@ -800,6 +951,48 @@ async function loadAuditResult() {
   document.getElementById('btn-audit-open').href = link;
   
   card.style.display = 'block';
+}
+
+// ============================================
+// SUBMIT REVISI (tanpa ubah link)
+// ============================================
+async function submitRevisi(docID) {
+  // Cari dokumen
+  let doc = allDocs.find(d => d.docID === docID);
+  
+  if (!doc) {
+    for (const parent of allDocs) {
+      if (parent.subs) {
+        const sub = parent.subs.find(s => s.docID === docID);
+        if (sub) { doc = sub; break; }
+      }
+    }
+  }
+  
+  if (!doc) {
+    showToast('Dokumen tidak ditemukan', 'error');
+    return;
+  }
+  
+  const konfirmasi = confirm(
+    `🔄 KONFIRMASI SUBMIT REVISI\n\n` +
+    `Dokumen: ${doc.nama_dokumen}\n\n` +
+    `Link: ${doc.link}\n\n` +
+    `Catatan sebelumnya:\n${doc.verifikator_catatan || doc.auditor_catatan || '(tidak ada)'}\n\n` +
+    `Kirim konfirmasi ke verifikator? (Link tetap sama)`
+  );
+  
+  if (!konfirmasi) return;
+  
+  // ⚠️ PENTING: Panggil action 'submitRevisi' (bukan 'submitLink')
+  const result = await callAPI('submitRevisi', { docID: docID });
+  
+  if (result.success) {
+    showToast('✅ Revisi terkirim ke verifikator!');
+    await loadDocs();
+  } else {
+    showToast('❌ ' + result.message, 'error');
+  }
 }
 
 function logout() {

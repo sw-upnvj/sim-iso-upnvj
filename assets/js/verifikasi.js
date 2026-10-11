@@ -79,7 +79,6 @@ function populateSubsatkerFilter() {
 
 function updateStats(stats) {
   if (!stats) {
-    // Fallback
     document.getElementById('stat-submitted').textContent = allDocs.length;
     document.getElementById('stat-verified').textContent = '—';
     document.getElementById('stat-rejected').textContent = '—';
@@ -91,6 +90,17 @@ function updateStats(stats) {
   document.getElementById('stat-verified').textContent = stats.verified || 0;
   document.getElementById('stat-rejected').textContent = stats.ditolak || 0;
   document.getElementById('stat-progress').textContent = (stats.progress || 0) + '%';
+  
+  // ===== Info bar revisi =====
+  const revisiEl = document.getElementById('info-revisi');
+  if (revisiEl) {
+    if (stats.revisi > 0) {
+      revisiEl.style.display = 'block';
+      revisiEl.innerHTML = `🔄 <strong>${stats.revisi} dokumen revisi baru</strong> — mohon dicek ulang`;
+    } else {
+      revisiEl.style.display = 'none';
+    }
+  }
 }
 
 function renderDocs() {
@@ -133,8 +143,8 @@ function renderDocs() {
           <th style="width:50px;">No</th>
           <th>Subsatker</th>
           <th>Nama Dokumen</th>
-          <th style="width:100px;">Status</th>
-          <th style="width:150px;">Link</th>
+          <th style="width:160px;">Status</th>
+          <th style="width:100px;">Link</th>
           <th style="width:180px;">Aksi</th>
         </tr>
       </thead>
@@ -142,20 +152,32 @@ function renderDocs() {
   `;
   
   filtered.forEach((doc, index) => {
-    const statusBadge = doc.status === 'submitted'
-      ? '<span class="badge badge-info">📤 Submitted</span>'
-      : '<span class="badge badge-danger">❌ Ditolak</span>';
+    let statusBadge;
+    if (doc.is_revision) {
+      statusBadge = `<span class="badge" style="background:#FEF3C7;color:#92400E;">🔄 Revisi ke-${doc.revision_count}</span>`;
+    } else if (doc.status === 'submitted') {
+      statusBadge = '<span class="badge badge-info">📤 Baru</span>';
+    } else if (doc.status === 'rejected') {
+      statusBadge = '<span class="badge badge-danger">❌ Ditolak</span>';
+    } else {
+      statusBadge = '<span class="badge badge-gray">' + escapeHtml(doc.status) + '</span>';
+    }
     
-    const revisionInfo = doc.revision_count > 0
-      ? `<div style="font-size:10px;color:#D97706;margin-top:2px;">Revisi ke-${doc.revision_count}</div>`
+    const rowStyle = doc.is_revision ? 'background:#FFFBEB;' : '';
+    
+    const catatanInfo = (doc.is_revision && doc.verifikator_catatan)
+      ? `<div style="font-size:10px;color:#92400E;margin-top:3px;">Catatan sebelumnya: ${escapeHtml(doc.verifikator_catatan.substring(0, 40))}${doc.verifikator_catatan.length > 40 ? '...' : ''}</div>`
       : '';
     
     html += `
-      <tr>
+      <tr style="${rowStyle}">
         <td>${index + 1}</td>
         <td><strong style="color:#0F3D2E;">${escapeHtml(doc.subsatker)}</strong></td>
-        <td>${escapeHtml(doc.nama_dokumen)}</td>
-        <td>${statusBadge}${revisionInfo}</td>
+        <td>
+          ${escapeHtml(doc.nama_dokumen)}
+          ${catatanInfo}
+        </td>
+        <td>${statusBadge}</td>
         <td>
           <a href="${escapeHtml(doc.link)}" target="_blank" class="btn btn-secondary btn-sm">🔗 Buka</a>
         </td>

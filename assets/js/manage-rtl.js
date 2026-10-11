@@ -48,7 +48,7 @@ function renderUserInfo() {
   if (elRtl) elRtl.style.display = 'flex';
 }
 
-async function loadAll(forceRefresh = false) {
+async function loadAll() {
   await Promise.all([
     loadConfig(),
     loadProdi()

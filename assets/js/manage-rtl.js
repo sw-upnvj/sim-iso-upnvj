@@ -55,7 +55,9 @@ async function loadAll() {
   ]);
 }
 
-// ===== LOAD CONFIG LINK =====
+// ============================================
+// LOAD CONFIG LINK (4 LINK)
+// ============================================
 async function loadConfig() {
   const result = await callAPI('getRtlConfig');
   
@@ -72,26 +74,45 @@ async function loadConfig() {
   document.getElementById('label-year-audit').textContent = activeYear;
   document.getElementById('label-year-prodi').textContent = activeYear;
   
+  // Load 4 link
   document.getElementById('input-link-rtl').value = data.link_rtl_auditee || '';
   document.getElementById('input-link-audit').value = data.link_audit_auditor || '';
+  document.getElementById('input-link-absensi').value = data.link_absensi_auditor || '';
+  document.getElementById('input-link-dokumentasi').value = data.link_dokumentasi || '';
 }
 
+// ============================================
+// SAVE CONFIG LINK (4 LINK)
+// ============================================
 async function saveLinks() {
   const linkRtl = document.getElementById('input-link-rtl').value.trim();
   const linkAudit = document.getElementById('input-link-audit').value.trim();
+  const linkAbsensi = document.getElementById('input-link-absensi').value.trim();
+  const linkDokumentasi = document.getElementById('input-link-dokumentasi').value.trim();
   
-  if (!linkRtl && !linkAudit) {
+  // Validasi minimal 1 link terisi
+  if (!linkRtl && !linkAudit && !linkAbsensi && !linkDokumentasi) {
     showToast('Minimal 1 link harus diisi', 'error');
     return;
   }
   
+  // Validasi URL Google
   const urlPattern = /^https?:\/\/(drive|docs)\.google\.com\//;
+  
   if (linkRtl && !urlPattern.test(linkRtl)) {
     showToast('Link RTL harus dari Google Drive/Docs', 'error');
     return;
   }
   if (linkAudit && !urlPattern.test(linkAudit)) {
     showToast('Link Audit harus dari Google Drive/Docs', 'error');
+    return;
+  }
+  if (linkAbsensi && !urlPattern.test(linkAbsensi)) {
+    showToast('Link Absensi harus dari Google Drive/Docs', 'error');
+    return;
+  }
+  if (linkDokumentasi && !urlPattern.test(linkDokumentasi)) {
+    showToast('Link Dokumentasi harus dari Google Drive/Docs', 'error');
     return;
   }
   
@@ -101,7 +122,9 @@ async function saveLinks() {
   
   const result = await callAPI('saveRtlConfig', {
     link_rtl_auditee: linkRtl,
-    link_audit_auditor: linkAudit
+    link_audit_auditor: linkAudit,
+    link_absensi_auditor: linkAbsensi,
+    link_dokumentasi: linkDokumentasi
   });
   
   btn.disabled = false;
@@ -114,7 +137,9 @@ async function saveLinks() {
   }
 }
 
-// ===== LOAD PRODI =====
+// ============================================
+// LOAD PRODI
+// ============================================
 async function loadProdi() {
   const container = document.getElementById('prodi-list');
   container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat daftar prodi...</div>';

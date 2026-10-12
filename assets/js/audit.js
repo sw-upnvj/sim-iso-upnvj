@@ -35,6 +35,15 @@ function renderUserInfo() {
     .toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   
+  // ===== Menu untuk AUDITOR (dan admin) =====
+  if (currentUser.role === 'auditor' || currentUser.role === 'administrator') {
+    const elAudit = document.getElementById('sidebar-audit');
+    if (elAudit) elAudit.style.display = 'flex';
+    const elAbsensi = document.getElementById('sidebar-absensi');
+    if (elAbsensi) elAbsensi.style.display = 'flex';
+  }
+  
+  // ===== Menu khusus ADMIN =====
   if (currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-manage-user');
     if (el) el.style.display = 'flex';

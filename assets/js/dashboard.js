@@ -55,6 +55,8 @@ function renderUserInfo() {
   if (currentUser.role === 'auditor' || currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-audit');
     if (el) el.style.display = 'flex';
+    const elAbsensi = document.getElementById('sidebar-absensi');
+    if (elAbsensi) elAbsensi.style.display = 'flex';
   }
   
   if (currentUser.role === 'administrator') {

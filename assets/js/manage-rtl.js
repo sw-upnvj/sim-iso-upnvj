@@ -46,6 +46,9 @@ function renderUserInfo() {
   
   const elRtl = document.getElementById('sidebar-manage-rtl');
   if (elRtl) elRtl.style.display = 'flex';
+
+  const elAbsensi = document.getElementById('sidebar-absensi');
+if (elAbsensi) elAbsensi.style.display = 'flex';
 }
 
 async function loadAll() {

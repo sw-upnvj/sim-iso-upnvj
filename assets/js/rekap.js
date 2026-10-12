@@ -42,9 +42,13 @@ function renderUserInfo() {
     if (elVerif) elVerif.style.display = 'flex';
     const elAudit = document.getElementById('sidebar-audit');
     if (elAudit) elAudit.style.display = 'flex';
+    const elAbsensi = document.getElementById('sidebar-absensi');       // ← TAMBAH
+    if (elAbsensi) elAbsensi.style.display = 'flex';                    // ← TAMBAH
   } else if (currentUser.role === 'auditor') {
     const elAudit = document.getElementById('sidebar-audit');
     if (elAudit) elAudit.style.display = 'flex';
+    const elAbsensi = document.getElementById('sidebar-absensi');       // ← TAMBAH
+    if (elAbsensi) elAbsensi.style.display = 'flex';                    // ← TAMBAH
   }
 }
 

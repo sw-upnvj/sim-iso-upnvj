@@ -47,6 +47,9 @@ function renderUserInfo() {
   
   const elAudit = document.getElementById('sidebar-audit');
   if (elAudit) elAudit.style.display = 'flex';
+
+  const elAbsensi = document.getElementById('sidebar-absensi');
+if (elAbsensi) elAbsensi.style.display = 'flex';
 }
 
 async function loadSubsatkerList() {

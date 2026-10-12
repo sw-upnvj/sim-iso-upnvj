@@ -28,7 +28,7 @@
       <a href="dashboard.html"><span class="sidebar-menu-icon">🏠</span> Dashboard</a>
       <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;"><span class="sidebar-menu-icon">✅</span> Verifikasi</a>
       <a href="audit.html" class="active"><span class="sidebar-menu-icon">🔍</span> Audit</a>
-      
+      <a href="absensi.html" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Absensi</a>
       <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
       <a href="rekap.html"><span class="sidebar-menu-icon">📊</span> Rekap</a>
       <a href="manage-user.html" id="sidebar-manage-user" style="display:none;"><span class="sidebar-menu-icon">👥</span> Kelola User</a>
@@ -111,15 +111,15 @@
             <div class="table-filters">
               <input type="text" id="filter-search" placeholder="Cari satker..." oninput="renderProdi()">
               <select id="filter-rtl" onchange="renderProdi()">
-                <option value="">Semua Prodi</option>
-                <option value="rtl">Prodi dengan RTL</option>
-                <option value="non-rtl">Prodi Tanpa RTL</option>
+                <option value="">Semua Satker</option>
+                <option value="rtl">Satker dengan RTL</option>
+                <option value="non-rtl">Satker Tanpa RTL</option>
               </select>
             </div>
           </div>
           
           <div id="prodi-container" style="padding:16px;">
-            <div class="loading"><span class="spinner"></span> Memuat daftar prodi...</div>
+            <div class="loading"><span class="spinner"></span> Memuat daftar satker...</div>
           </div>
         </div>
       </div>

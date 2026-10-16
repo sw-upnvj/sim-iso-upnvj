@@ -1,0 +1,522 @@
+// ============================================
+// Seed.gs - Generate MasterDoc 2026
+// STRUKTUR PER-SATKER (berbeda-beda)
+// ============================================
+
+const SEED_YEAR = 2026;
+
+// ============================================
+// DAFTAR SUBSATKER
+// ============================================
+const DAFTAR_SUBSATKER = {
+  'Fakultas Teknik': [
+    'S1 Teknik Industri', 'S1 Teknik Mesin', 'S1 Teknik Perkapalan', 'S1 Teknik Elektro'
+  ],
+  'Fakultas Ekonomi dan Bisnis': [
+    'D3 Perbankan dan Keuangan', 'D3 Akuntansi', 'S1 Manajemen',
+    'S1 Akuntansi', 'S1 Ekonomi Pembangunan', 'S1 Ekonomi Syariah',
+    'S2 Manajemen', 'S2 Akuntansi'
+  ],
+  'Fakultas Hukum': [
+    'S1 Ilmu Hukum', 'S1 Hukum Bisnis', 'S2 Hukum', 'S3 Hukum'
+  ],
+  'Fakultas Ilmu Kesehatan': [
+    'D3 Keperawatan', 'D3 Fisioterapi', 'S1 Keperawatan',
+    'S1 Kesehatan Masyarakat', 'S1 Gizi', 'S1 Fisioterapi',
+    'Profesi Ners', 'S2 Kesehatan Masyarakat', 'S2 Keperawatan'
+  ],
+  'Fakultas Ilmu Komputer': [
+    'D3 Sistem Informasi', 'S1 Informatika', 'S1 Sistem Informasi', 'S1 Sains Data'
+  ],
+  'Fakultas Ilmu Sosial dan Ilmu Politik': [
+    'S1 Ilmu Komunikasi', 'S1 Sains Informasi', 'S1 Hubungan Internasional',
+    'S1 Ilmu Politik', 'S1 Kajian Film Televisi & Media',
+    'S2 Ilmu Komunikasi', 'S2 Hubungan Internasional', 'S2 Ilmu Politik'
+  ],
+  'Fakultas Kedokteran': [
+    'S1 Kedokteran', 'S1 Farmasi', 'Profesi Dokter', 'S2 Sains Biomedis',
+    'Spesialis Radiologi', 'S1 Biologi', 'Profesi Apoteker'
+  ],
+  'Satuan Kerja Pendukung': [
+    'LPPM', 'LPMPP', 'Biro PKU', 'SPI',
+    'Biro Akademik Kemahasiswaan dan Kerja Sama',
+    'UPA Perpustakaan', 'UPA TIK', 'UPA Bahasa',
+    'UPA Lab Terpadu', 'UPA Layanan Uji Kompetensi',
+    'UPA PKK'
+  ],
+  'Laboratorium': [
+    // ===== 2 Lab dengan RTL 2025 =====
+    'Laboratorium Biologi',
+    'Laboratorium Keperawatan',
+    'Laboratorium Biologi Umum',
+    
+    // ===== 43 Lab baru (tanpa RTL) =====
+    'Laboratorium Komputasi dan Akuntansi',
+    'Laboratorium Ekonomi dan Manajemen',
+    'Laboratorium Hukum FH',
+    'Laboratorium Hubungan Internasional dan Politik',
+    'Laboratorium Komunikasi Terpadu',
+    'Laboratorium Film dan TV',
+    'Laboratorium Sains Informasi dan Multimedia',
+    'Laboratorium Radio dan Podcast',
+    'Laboratorium Fisika',
+    'Laboratorium Elektronika, dan Kendali',
+    'Laboratorium Ergonomi dan Perancangan Sistem Kerja',
+    'Laboratorium Komputasi',
+    'Laboratorium Material Teknik',
+    'Laboratorium Perancangan Kapal',
+    'Laboratorium Perencanaan dan Optimasi Sistem Industri',
+    'Laboratorium Proses dan Produksi Kapal',
+    'Laboratorium Statistik, Optimasi dan Perancangan Teknik Industri',
+    'Laboratorium Telekomunikasi',
+    'Laboratorium Proses Manufaktur',
+    'Laboratorium Teknik Tenaga Listrik dan Tegangan Tinggi',
+    'Laboratorium Getaran Mekanik',
+    'Laboratorium Konversi Energi',
+    'Laboratorium Fisioterapi',
+    'Laboratorium Ilmu Gizi',
+    'Laboratorium Kesehatan Masyarakat',
+    'Laboratorium Informatika',
+    'Laboratorium Sistem Informasi',
+    'Laboratorium Anatomi dan Neurosains',
+    'Laboratorium Medical Education Unit',
+    'Laboratorium Biologi Prodi Kedokteran Umum',
+    'Laboratorium Clinical Skill Program',
+    'Laboratorium Farmakologi, Farmasi Klinis, dan Farmasi Sosial',
+    'Laboratorium Farmakologi',
+    'Laboratorium Ilmu Kefarmasian dan Fitokimia',
+    'Laboratorium Ilmu Kesehatan Matra',
+    'Laboratorium Ilmu Kesehatan Masyarakat, Kedokteran Keluarga, dan Tugas Akhir',
+    'Laboratorium Analisis Farmasi Program Studi Farmasi Program Sarjana',
+    'Laboratorium Fisiologi',
+    'Laboratorium Biokimia',
+    'Laboratorium Histologi',
+    'Laboratorium Parasitologi',
+    'Laboratorium Patologi Anatomi',
+    'Laboratorium Patologi Klinik'
+  ]
+};
+
+// ============================================
+// ENTRI DENGAN RTL 2025 (14 entri)
+// ============================================
+const PRODI_DENGAN_RTL = [
+  // Prodi
+  'S2 Akuntansi',
+  'S2 Hukum',
+  'S1 Teknik Perkapalan',
+  'S1 Ilmu Politik',
+  // Satker
+  'LPPM',
+  'LPMPP',
+  'Biro PKU',
+  'Biro Akademik Kemahasiswaan dan Kerja Sama',
+  'SPI',
+  // UPA
+  'UPA Perpustakaan',
+  'UPA TIK',
+  'UPA Lab Terpadu',
+  // Lab
+  'Laboratorium Biologi',
+  'Laboratorium Keperawatan'
+];
+
+// ============================================
+// DOKUMEN RTL (dipakai semua yang punya RTL)
+// ============================================
+const DOKUMEN_RTL = 'Penyelesaian RTL Temuan ISO Tahun 2025';
+
+// ============================================
+// STRUKTUR DOKUMEN PER KATEGORI
+// ============================================
+
+// --- PRODI (21 dokumen) ---
+const STRUKTUR_PRODI = [
+  { no: 1, nama: 'Renstra' },
+  { no: 2, nama: 'PK dan Laporan Capaian PK' },
+  { no: 3, nama: 'Risk Register' },
+  { no: 4, nama: 'Analisa SWOT' },
+  { no: 5, nama: 'Program Kerja Tahunan' },
+  { no: 6, nama: 'Peraturan Akademik' },
+  { no: 7, nama: 'SOP/Instruksi Kerja' },
+  { no: 8, nama: 'Kalender Akademik Fakultas/Prodi' },
+  { no: 9, nama: 'LKPS TA.2025/2026' },
+  { no: 10, nama: 'Kurikulum yang dipakai saat ini' },
+  { no: 11, nama: 'Pedoman Akademik' },
+  { no: 12, nama: 'Bukti Pembelajaran yang Sudah Selesai', subs: [
+    'a. RPS',
+    'b. Daftar Hadir Perkuliahan',
+    'c. Jurnal Perkuliahan',
+    'd. Materi/Modul Pembelajaran',
+    'e. Soal Ujian UTS maupun UAS',
+    'f. Pedoman Praktikum (jika ada)',
+    'g. Bukti Penilaian Pembelajaran (UTS, UAS, Praktikum, Tugas)',
+    'h. Portofolio MK'
+  ]},
+  { no: 13, nama: 'Bukti Pelaksanaan Ujian Skripsi', subs: [
+    'a. Nama mahasiswa yang melakukan skripsi (lengkap dengan NIM)',
+    'b. Surat penunjukan Dosen pembimbing dan dosen penguji',
+    'c. Buku panduan KTI/Skripsi/Thesis',
+    'd. Bukti hasil bimbingan skripsi',
+    'e. Contoh sampul judul skripsi',
+    'f. Bukti pengecekan plagiasi',
+    'g. Bukti plagiasi policy (toleransi prosentase)',
+    'h. Bukti penilaian hasil sidang skripsi',
+    'i. Bukti pemenuhan persyaratan sidang skripsi'
+  ]},
+  { no: 14, nama: 'Bukti Kegiatan Wisuda', subs: [
+    'a. Bukti mahasiswa yang mengikuti wisuda (Buku Wisuda)',
+    'b. Bukti persyaratan pemenuhan wisuda',
+    'c. Bukti penyampaian lulus ke Forlap PPDIKTI'
+  ]},
+  { no: 15, nama: 'Sertifikat Akreditasi BAN-PT/LAM' },
+  { no: 16, nama: 'Bukti Survey Kepuasan Interested Parties' },
+  { no: 17, nama: 'Hasil Tracer Study Terakhir' },
+  { no: 18, nama: 'Hasil EDOM Terakhir' },
+  { no: 19, nama: 'Bukti Pengelolaan Complain' },
+  { no: 20, nama: 'Dokumen Evaluasi Diri Terakhir (LED)' },
+  { no: 21, nama: 'Dokumen BKD (Beban Kerja Dosen)' }
+];
+
+// --- LPPM (10 dokumen) ---
+const STRUKTUR_LPPM = [
+  { no: 1, nama: 'Rencana Strategis Research and Community Services' },
+  { no: 2, nama: 'Program Kerja untuk Research and Community Services' },
+  { no: 3, nama: 'Struktur Organisasi di Research and Community Services' },
+  { no: 4, nama: 'Risk Register' },
+  { no: 5, nama: 'Roadmap Penelitian Seluruh Program Studi' },
+  { no: 6, nama: 'Roadmap Pengabdian Masyarakat Seluruh Program Studi' },
+  { no: 7, nama: 'Prosedur/kebijakan/SK tim reviewer internal penelitian & pengabdian masyarakat' },
+  { no: 8, nama: 'Buku panduan/pedoman penelitian dan pengabdian masyarakat' },
+  { no: 9, nama: 'Contoh hasil penelitian yang sudah terpublis' },
+  { no: 10, nama: 'Contoh hasil pengabdian masyarakat' }
+];
+
+// --- LPMPP (15 dokumen) ---
+const STRUKTUR_LPMPP = [
+  { no: 1, nama: 'Bukti penyelesaian temuan hasil audit MSC Global tahun sebelumnya' },
+  { no: 2, nama: 'Hasil identifikasi isu strategis yang relevan' },
+  { no: 3, nama: 'Hasil identifikasi kebutuhan dan harapan interested parties' },
+  { no: 4, nama: 'Rencana Strategis' },
+  { no: 5, nama: 'Hasil review identifikasi risiko dan peluang' },
+  { no: 6, nama: 'Sasaran mutu/kontrak kinerja beserta monitoring dan evaluasi' },
+  { no: 7, nama: 'Bukti perubahan terhadap dokumen internal SPMI (jika ada)' },
+  { no: 8, nama: 'Bukti pengelolaan arsip' },
+  { no: 9, nama: 'Hasil audit internal' },
+  { no: 10, nama: 'Hasil Tinjauan manajemen beserta Tindak lanjutnya' },
+  { no: 11, nama: 'Manual termasuk kebijakan EOMS dan sasaran/target (IKU)' },
+  { no: 12, nama: 'Daftar Dokumen Internal dan eksternal' },
+  { no: 13, nama: 'Proses Bisnis' },
+  { no: 14, nama: 'Struktur Organisasi' },
+  { no: 15, nama: 'Temuan NC pada saat audit internal' }
+];
+
+// --- BIRO PKU (28 dokumen) ---
+const STRUKTUR_BIRO_PKU = [
+  { no: 1, nama: 'Rencana/jadwal pemeliharaan inventaris' },
+  { no: 2, nama: 'Bukti pemeliharaan inventaris' },
+  { no: 3, nama: 'Bukti Pemusnahan/penghapusan BMN' },
+  { no: 4, nama: 'Bukti perbaikan inventaris (jika ada)' },
+  { no: 5, nama: 'Bukti Pengadaan (SPK sampai berita acara serah terima)' },
+  { no: 6, nama: 'Bukti evaluasi supplier' },
+  { no: 7, nama: 'List supplier updated' },
+  { no: 8, nama: 'Rencana strategis atau rencana kerja tahunan' },
+  { no: 9, nama: 'Bukti identifikasi risiko dan peluang' },
+  { no: 10, nama: 'Data dukung untuk memonitor risiko dan peluang' },
+  { no: 11, nama: 'Sasaran kerja/indikator kinerja utama' },
+  { no: 12, nama: 'Data dan informasi pendukung serta eviden monitoring' },
+  { no: 13, nama: 'Bukti penerimaan keuangan mahasiswa' },
+  { no: 14, nama: 'Bukti penerimaan non mahasiswa' },
+  { no: 15, nama: 'Bukti hasil audit dari Kantor Akuntan Publik (jika ada)' },
+  { no: 16, nama: 'Bukti pengeluaran keuangan' },
+  { no: 17, nama: 'Struktur organisasi (up to date) UPNV Jakarta' },
+  { no: 18, nama: 'Bukti penilaian kinerja tenaga pendidik/kependidikan non PNS' },
+  { no: 19, nama: 'Beban Kerja Dosen semester genap (2 Dosen)' },
+  { no: 20, nama: 'Bukti dosen yang baru mendapat Jabatan Fungsional' },
+  { no: 21, nama: 'Bukti perencanaan tenaga kerja' },
+  { no: 22, nama: 'Bukti rekrutmen karyawan' },
+  { no: 23, nama: 'Kode etik/tata tertib untuk karyawan' },
+  { no: 24, nama: 'Hasil analisis Jabatan terbaru dan analisis beban kerja' },
+  { no: 25, nama: 'Hasil analisis kebutuhan training untuk pegawai' },
+  { no: 26, nama: 'Bukti pelaksanaan training' },
+  { no: 27, nama: 'Sasaran Kinerja Pegawai (SKP) 2 orang pegawai' },
+  { no: 28, nama: 'Bukti sertifikat Dosen' }
+];
+
+// --- SPI (12 dokumen) ---
+const STRUKTUR_SPI = [
+  { no: 1, nama: 'Rencana Strategis / rencana kerja tahunan SPI' },
+  { no: 2, nama: 'Bukti identifikasi risiko dan peluang SPI' },
+  { no: 3, nama: 'Dokumen rencana jadwal pengawasan internal' },
+  { no: 4, nama: 'Tools/formulir/ceklist pengawasan internal' },
+  { no: 5, nama: 'Tools/formulir/ceklist rekomendasi hasil pengawasan' },
+  { no: 6, nama: 'Bukti monitoring rekomendasi' },
+  { no: 7, nama: 'Sasaran kinerja/Indikator kinerja utama SPI' },
+  { no: 8, nama: 'Data dan informasi pendukung serta eviden monitoring' },
+  { no: 9, nama: 'Struktur SPI (up to date)' },
+  { no: 10, nama: 'Standar kompetensi sesuai struktur Organisasi SPI' },
+  { no: 11, nama: 'Bukti evaluasi kompetensi sesuai struktur SPI' },
+  { no: 12, nama: 'Data dan informasi terkait evaluasi kinerja pelaksanaan audit SPI' }
+];
+
+// --- BIRO AKK (20 dokumen) ---
+const STRUKTUR_BIRO_AKK = [
+  { no: 1, nama: 'Kalender akademik' },
+  { no: 2, nama: 'Buku panduan/pedoman akademik' },
+  { no: 3, nama: 'Bukti hasil pembelajaran (KHS) contoh' },
+  { no: 4, nama: 'Bukti konversi mahasiswa transfer masuk (jika ada)' },
+  { no: 5, nama: 'Bukti mahasiswa cuti atau berhenti study' },
+  { no: 6, nama: 'Bukti pelaporan hasil study ke FORLAP PDDIKTI' },
+  { no: 7, nama: 'Bukti kegiatan kemahasiswaan' },
+  { no: 8, nama: 'Bukti pengendalian blanko Ijazah' },
+  { no: 9, nama: 'Panduan penerimaan mahasiswa baru' },
+  { no: 10, nama: 'Bukti penerimaan mahasiswa baru' },
+  { no: 11, nama: 'Bukti bahwa ujian masuk sudah diverifikasi' },
+  { no: 12, nama: 'Hasil tracer study dan Analisa 2024/2025' },
+  { no: 13, nama: 'Bukti masukan alumni untuk perubahan kurikulum' },
+  { no: 14, nama: 'Rekapitulasi/list kerjasama dengan interested parties' },
+  { no: 15, nama: 'MOU dengan masing-masing interested parties' },
+  { no: 16, nama: 'Bukti realisasi kegiatan sesuai Kerjasama' },
+  { no: 17, nama: 'Bukti monitoring dan evaluasi MOU' },
+  { no: 18, nama: 'Program kerja 2026 dan evaluasi hasil kerja 2025' },
+  { no: 19, nama: 'Analisa resiko' },
+  { no: 20, nama: 'SOP Pelaksanaan Kegiatan' }
+];
+
+// --- UPA PERPUSTAKAAN (10 dokumen) ---
+const STRUKTUR_UPA_PERPUSTAKAAN = [
+  { no: 1, nama: 'Program Kerja Perpustakaan 2025-2026' },
+  { no: 2, nama: 'Struktur Organisasi' },
+  { no: 3, nama: 'POB Perpustakaan' },
+  { no: 4, nama: 'Data statistik layanan' },
+  { no: 5, nama: 'Daftar risiko Perpustakaan' },
+  { no: 6, nama: 'Daftar inventaris' },
+  { no: 7, nama: 'Sertifikat tenaga fungsional pustakawan' },
+  { no: 8, nama: 'Laporan Stock Opname Koleksi' },
+  { no: 9, nama: 'Survei Kepuasan Pengguna' },
+  { no: 10, nama: 'Bukti tindak lanjut hasil survei' }
+];
+
+// --- UPA TIK (12 dokumen) ---
+const STRUKTUR_UPA_TIK = [
+  { no: 1, nama: 'Renstra' },
+  { no: 2, nama: 'Risk Register' },
+  { no: 3, nama: 'Daftar inventaris perangkat' },
+  { no: 4, nama: 'Rencana pemeliharaan inventaris TIK' },
+  { no: 5, nama: 'POB (Layanan, Infrastruktur, Aplikasi, Backup, dll)' },
+  { no: 6, nama: 'Dokumentasi jaringan universitas' },
+  { no: 7, nama: 'Bukti pelayanan kepada pengguna' },
+  { no: 8, nama: 'Hasil survei kepuasan pengguna' },
+  { no: 9, nama: 'Evaluasi layanan' },
+  { no: 10, nama: 'Laporan Tindak Lanjut Gangguan' },
+  { no: 11, nama: 'Bukti back up data, perbaikan terhadap trobel' },
+  { no: 12, nama: 'Bukti tindak lanjut hasil evaluasi' }
+];
+
+// --- UPA BAHASA (8 dokumen) ---
+const STRUKTUR_UPA_BAHASA = [
+  { no: 1, nama: 'Rencana kerja untuk UPT Bahasa tahun 2025-2026' },
+  { no: 2, nama: 'Jenis pelayanan yang ada di UPT Bahasa' },
+  { no: 3, nama: 'Standar skor untuk test TOEFL atau ELPT' },
+  { no: 4, nama: 'Evidence untuk bukti pelaksanaan bimbingan TOEFL/ELPT' },
+  { no: 5, nama: 'Master data penggandaan soal ujian' },
+  { no: 6, nama: 'Bukti revisi Soal tes TOEFL/ELPT' },
+  { no: 7, nama: 'Bukti pemusnahan soal tes TOEFL/ELPT (jika ada)' },
+  { no: 8, nama: 'Bukti pengendalian kompetensi tenaga di Language Institution' }
+];
+
+// --- UPA LUK (16 dokumen) ---
+const STRUKTUR_UPA_LUK = [
+  { no: 1, nama: 'Renstra' },
+  { no: 2, nama: 'Laporan Kinerja (LK)' },
+  { no: 3, nama: 'Struktur Organisasi' },
+  { no: 4, nama: 'Dokumen Prosedur Operasional Baku (POB)' },
+  { no: 5, nama: 'SOP Ujian Kompetensi' },
+  { no: 6, nama: 'Daftar inventaris' },
+  { no: 7, nama: 'Ceklist kesiapan alat' },
+  { no: 8, nama: 'Sertifikat pelatihan' },
+  { no: 9, nama: 'SK Panitia dan SK Penguji Uji Kompetensi' },
+  { no: 10, nama: 'MoU LPUK/Asosiasi' },
+  { no: 11, nama: 'Laporan penggunaan' },
+  { no: 12, nama: 'Hasil analisis kebutuhan uji kompetensi setiap Prodi' },
+  { no: 13, nama: 'Bukti pelaksanaan uji kompetensi' },
+  { no: 14, nama: 'Form komplain' },
+  { no: 15, nama: 'Bukti tindak lanjut komplain' },
+  { no: 16, nama: 'Bukti sertifikat Uji Kompetensi' }
+];
+
+// --- UPA PKK (10 dokumen) ---
+const STRUKTUR_UPA_PKK = [
+  { no: 1, nama: 'Rencana Strategis UPA' },
+  { no: 2, nama: 'Program Kerja Career development and entrepreneurship 2026' },
+  { no: 3, nama: 'Struktur Organisasi' },
+  { no: 4, nama: 'Bukti hasil pelaksanaan kegiatan 2024, 2025, 2026' },
+  { no: 5, nama: 'Database Kerjasama DUDI' },
+  { no: 6, nama: 'Database Lowongan Pekerjaan' },
+  { no: 7, nama: 'Program Pelatihan yang pernah diselenggarakan' },
+  { no: 8, nama: 'Laporan Kegiatan Pembekalan Inkubasi Bisnis' },
+  { no: 9, nama: 'POB Layanan Pengembangan Karir' },
+  { no: 10, nama: 'Laporan Survey kepuasan pengguna lulusan' }
+];
+
+// --- LAB (23 dokumen) ---
+const STRUKTUR_LAB = [
+  { no: 1, nama: 'Rencana strategis dan rencana kerja tahunan di Laboratorium' },
+  { no: 2, nama: 'Identifikasi risiko dan peluang di Laboratorium (Risk Register)' },
+  { no: 3, nama: 'Data dukung untuk memonitor risiko dan peluang' },
+  { no: 4, nama: 'Sasaran kerja/indikator kinerja utama di Laboratorium' },
+  { no: 5, nama: 'Data dan informasi pendukung serta eviden monitoring' },
+  { no: 6, nama: 'Standar Operasional Prosedur/Prosedur Operasional Baku' },
+  { no: 7, nama: 'Instruksi Kerja Laboratorium' },
+  { no: 8, nama: 'Struktur Organisasi Laboratorium' },
+  { no: 9, nama: 'Tugas, tanggung jawab dan wewenang' },
+  { no: 10, nama: 'Peningkatan Kompetensi Personel Laboratorium' },
+  { no: 11, nama: 'Bukti pengelolaan limbah di laboratorium (bila ada)' },
+  { no: 12, nama: 'Bukti pemeliharaan inventaris infrastruktur' },
+  { no: 13, nama: 'Bukti kalibrasi alat ukur (bila ada)' },
+  { no: 14, nama: 'Jadwal dan bukti perawatan Lab' },
+  { no: 15, nama: 'Mekanisme/Prosedur kegawatdaruratan di Laboratorium' },
+  { no: 16, nama: 'Bukti perbekalan obat maupun bahan' },
+  { no: 17, nama: 'Logbook Penggunaan Laboratorium' },
+  { no: 18, nama: 'Jadwal Penggunaan Laboratorium' },
+  { no: 19, nama: 'Penerapan K3 di Laboratorium' },
+  { no: 20, nama: 'Lampirkan jadwal praktikum' },
+  { no: 21, nama: 'Pengendalian alat ukur di Lab (bila ada)' },
+  { no: 22, nama: 'Modul praktikum' },
+  { no: 23, nama: 'Laporan Praktikum' }
+];
+
+// ============================================
+// MAPPING SUBSATKER → STRUKTUR
+// ============================================
+function getStrukturFor(subsatker) {
+  // Prodi (prefix D3/S1/S2/S3/Profesi/Spesialis)
+  if (/^(D3|S1|S2|S3|Profesi|Spesialis)\s/i.test(subsatker)) {
+    return STRUKTUR_PRODI;
+  }
+  
+  // Satker spesifik
+    const mapping = {
+    'LPPM': STRUKTUR_LPPM,
+    'LPMPP': STRUKTUR_LPMPP,
+    'Biro PKU': STRUKTUR_BIRO_PKU,
+    'SPI': STRUKTUR_SPI,
+    'Biro Akademik Kemahasiswaan dan Kerja Sama': STRUKTUR_BIRO_AKK,
+    'UPA Perpustakaan': STRUKTUR_UPA_PERPUSTAKAAN,
+    'UPA TIK': STRUKTUR_UPA_TIK,
+    'UPA Bahasa': STRUKTUR_UPA_BAHASA,
+    'UPA Layanan Uji Kompetensi': STRUKTUR_UPA_LUK,
+    'UPA PKK': STRUKTUR_UPA_PKK,
+    // ===== SEMUA LAB PAKAI STRUKTUR_LAB =====
+    'UPA Lab Terpadu': STRUKTUR_LAB,
+    'Laboratorium Biologi': STRUKTUR_LAB,
+    'Laboratorium Keperawatan': STRUKTUR_LAB,
+    'Laboratorium Biologi Umum': STRUKTUR_LAB,
+    'Laboratorium Komputasi dan Akuntansi': STRUKTUR_LAB,
+    'Laboratorium Ekonomi dan Manajemen': STRUKTUR_LAB,
+    'Laboratorium Hukum FH': STRUKTUR_LAB,
+    'Laboratorium Hubungan Internasional dan Politik': STRUKTUR_LAB,
+    'Laboratorium Komunikasi Terpadu': STRUKTUR_LAB,
+    'Laboratorium Film dan TV': STRUKTUR_LAB,
+    'Laboratorium Sains Informasi dan Multimedia': STRUKTUR_LAB,
+    'Laboratorium Radio dan Podcast': STRUKTUR_LAB,
+    'Laboratorium Fisika': STRUKTUR_LAB,
+    'Laboratorium Elektronika, dan Kendali': STRUKTUR_LAB,
+    'Laboratorium Ergonomi dan Perancangan Sistem Kerja': STRUKTUR_LAB,
+    'Laboratorium Komputasi': STRUKTUR_LAB,
+    'Laboratorium Material Teknik': STRUKTUR_LAB,
+    'Laboratorium Perancangan Kapal': STRUKTUR_LAB,
+    'Laboratorium Perencanaan dan Optimasi Sistem Industri': STRUKTUR_LAB,
+    'Laboratorium Proses dan Produksi Kapal': STRUKTUR_LAB,
+    'Laboratorium Statistik, Optimasi dan Perancangan Teknik Industri': STRUKTUR_LAB,
+    'Laboratorium Telekomunikasi': STRUKTUR_LAB,
+    'Laboratorium Proses Manufaktur': STRUKTUR_LAB,
+    'Laboratorium Teknik Tenaga Listrik dan Tegangan Tinggi': STRUKTUR_LAB,
+    'Laboratorium Getaran Mekanik': STRUKTUR_LAB,
+    'Laboratorium Konversi Energi': STRUKTUR_LAB,
+    'Laboratorium Fisioterapi': STRUKTUR_LAB,
+    'Laboratorium Ilmu Gizi': STRUKTUR_LAB,
+    'Laboratorium Kesehatan Masyarakat': STRUKTUR_LAB,
+    'Laboratorium Informatika': STRUKTUR_LAB,
+    'Laboratorium Sistem Informasi': STRUKTUR_LAB,
+    'Laboratorium Anatomi dan Neurosains': STRUKTUR_LAB,
+    'Laboratorium Medical Education Unit': STRUKTUR_LAB,
+    'Laboratorium Biologi Prodi Kedokteran Umum': STRUKTUR_LAB,
+    'Laboratorium Clinical Skill Program': STRUKTUR_LAB,
+    'Laboratorium Farmakologi, Farmasi Klinis, dan Farmasi Sosial': STRUKTUR_LAB,
+    'Laboratorium Farmakologi': STRUKTUR_LAB,
+    'Laboratorium Ilmu Kefarmasian dan Fitokimia': STRUKTUR_LAB,
+    'Laboratorium Ilmu Kesehatan Matra': STRUKTUR_LAB,
+    'Laboratorium Ilmu Kesehatan Masyarakat, Kedokteran Keluarga, dan Tugas Akhir': STRUKTUR_LAB,
+    'Laboratorium Analisis Farmasi Program Studi Farmasi Program Sarjana': STRUKTUR_LAB,
+    'Laboratorium Fisiologi': STRUKTUR_LAB,
+    'Laboratorium Biokimia': STRUKTUR_LAB,
+    'Laboratorium Histologi': STRUKTUR_LAB,
+    'Laboratorium Parasitologi': STRUKTUR_LAB,
+    'Laboratorium Patologi Anatomi': STRUKTUR_LAB,
+    'Laboratorium Patologi Klinik': STRUKTUR_LAB
+  };
+  
+  return mapping[subsatker] || STRUKTUR_PRODI; // fallback
+}
+
+// ============================================
+// FUNGSI UTAMA: Generate MasterDoc
+// ============================================
+function seedMasterDoc() {
+  const year = SEED_YEAR;
+  const sheet = getSheet(CONFIG.SHEET_NAMES.MASTER_DOC);
+  
+  const newHeaders = ['docID', 'tahun', 'subsatker', 'kategori', 'nama_dokumen', 'bobot', 'aktif', 'parent_id', 'urutan'];
+  
+  sheet.clear();
+  sheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+  
+  let counter = 0;
+  const newRows = [];
+  
+  for (const [fakultas, subsatkers] of Object.entries(DAFTAR_SUBSATKER)) {
+    for (const subsatker of subsatkers) {
+      const hasRTL = PRODI_DENGAN_RTL.indexOf(subsatker) !== -1;
+      const struktur = getStrukturFor(subsatker);
+      
+      // Dokumen utama
+      struktur.forEach(doc => {
+        counter++;
+        const parentID = 'D' + String(counter).padStart(5, '0');
+        
+        newRows.push([
+          parentID, year, subsatker, 'A', doc.nama, 70, 'TRUE', '', doc.no
+        ]);
+        
+        // Sub-item
+        if (doc.subs && doc.subs.length > 0) {
+          doc.subs.forEach((subName, idx) => {
+            counter++;
+            const subID = 'D' + String(counter).padStart(5, '0');
+            newRows.push([
+              subID, year, subsatker, 'A', subName, 70, 'TRUE', parentID, idx + 1
+            ]);
+          });
+        }
+      });
+      
+      // Kalau punya RTL
+      if (hasRTL) {
+        counter++;
+        const rtlID = 'D' + String(counter).padStart(5, '0');
+        newRows.push([
+          rtlID, year, subsatker, 'B', DOKUMEN_RTL, 30, 'TRUE', '', 99
+        ]);
+      }
+    }
+  }
+  
+  if (newRows.length > 0) {
+    sheet.getRange(2, 1, newRows.length, newHeaders.length).setValues(newRows);
+  }
+  
+  Logger.log('✅ Berhasil generate ' + newRows.length + ' baris MasterDoc untuk tahun ' + year);
+  Logger.log('Prodi dengan RTL: ' + PRODI_DENGAN_RTL.join(', '));
+  Logger.log('Total subsatker: ' + Object.values(DAFTAR_SUBSATKER).flat().length);
+}

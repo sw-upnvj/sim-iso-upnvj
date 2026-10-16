@@ -1,5 +1,6 @@
 // ============================================
 // manage-rtl.js - Kelola Link RTL & Audit (Admin)
+// + hideEmptySections + clearAPICache + paralel load + cache
 // ============================================
 
 let currentUser = null;
@@ -19,7 +20,12 @@ window.addEventListener('load', async () => {
   }
   
   renderUserInfo();
-  await loadAll();
+  
+  // ===== Load paralel =====
+  await Promise.all([
+    loadConfig(),
+    loadProdi()
+  ]);
 });
 
 function renderUserInfo() {
@@ -46,16 +52,15 @@ function renderUserInfo() {
   
   const elRtl = document.getElementById('sidebar-manage-rtl');
   if (elRtl) elRtl.style.display = 'flex';
-
+  
   const elAbsensi = document.getElementById('sidebar-absensi');
-if (elAbsensi) elAbsensi.style.display = 'flex';
-}
-
-async function loadAll() {
-  await Promise.all([
-    loadConfig(),
-    loadProdi()
-  ]);
+  if (elAbsensi) elAbsensi.style.display = 'flex';
+  
+  // ===== Menu Rekap (admin) =====
+  showMenuRekap();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
 }
 
 // ============================================
@@ -72,16 +77,26 @@ async function loadConfig() {
   const data = result.data;
   activeYear = data.tahun || new Date().getFullYear();
   
-  document.getElementById('year-badge').textContent = activeYear;
-  document.getElementById('label-year-rtl').textContent = activeYear - 1;
-  document.getElementById('label-year-audit').textContent = activeYear;
-  document.getElementById('label-year-prodi').textContent = activeYear;
+  const elYear = document.getElementById('year-badge');
+  const elRtl = document.getElementById('label-year-rtl');
+  const elAudit = document.getElementById('label-year-audit');
+  const elProdi = document.getElementById('label-year-prodi');
+  
+  if (elYear) elYear.textContent = activeYear;
+  if (elRtl) elRtl.textContent = activeYear - 1;
+  if (elAudit) elAudit.textContent = activeYear;
+  if (elProdi) elProdi.textContent = activeYear;
   
   // Load 4 link
-  document.getElementById('input-link-rtl').value = data.link_rtl_auditee || '';
-  document.getElementById('input-link-audit').value = data.link_audit_auditor || '';
-  document.getElementById('input-link-absensi').value = data.link_absensi_auditor || '';
-  document.getElementById('input-link-dokumentasi').value = data.link_dokumentasi || '';
+  const elLinkRtl = document.getElementById('input-link-rtl');
+  const elLinkAudit = document.getElementById('input-link-audit');
+  const elLinkAbsensi = document.getElementById('input-link-absensi');
+  const elLinkDokumentasi = document.getElementById('input-link-dokumentasi');
+  
+  if (elLinkRtl) elLinkRtl.value = data.link_rtl_auditee || '';
+  if (elLinkAudit) elLinkAudit.value = data.link_audit_auditor || '';
+  if (elLinkAbsensi) elLinkAbsensi.value = data.link_absensi_auditor || '';
+  if (elLinkDokumentasi) elLinkDokumentasi.value = data.link_dokumentasi || '';
 }
 
 // ============================================
@@ -93,13 +108,11 @@ async function saveLinks() {
   const linkAbsensi = document.getElementById('input-link-absensi').value.trim();
   const linkDokumentasi = document.getElementById('input-link-dokumentasi').value.trim();
   
-  // Validasi minimal 1 link terisi
   if (!linkRtl && !linkAudit && !linkAbsensi && !linkDokumentasi) {
     showToast('Minimal 1 link harus diisi', 'error');
     return;
   }
   
-  // Validasi URL Google
   const urlPattern = /^https?:\/\/(drive|docs)\.google\.com\//;
   
   if (linkRtl && !urlPattern.test(linkRtl)) {
@@ -111,7 +124,7 @@ async function saveLinks() {
     return;
   }
   if (linkAbsensi && !urlPattern.test(linkAbsensi)) {
-    showToast('Link Absensi harus dari Google Drive/Docs', 'error');
+    showToast('Link Presensi harus dari Google Drive/Docs', 'error');
     return;
   }
   if (linkDokumentasi && !urlPattern.test(linkDokumentasi)) {
@@ -134,6 +147,7 @@ async function saveLinks() {
   btn.textContent = '💾 Simpan Link';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
   } else {
     showToast('❌ ' + result.message, 'error');
@@ -145,6 +159,7 @@ async function saveLinks() {
 // ============================================
 async function loadProdi() {
   const container = document.getElementById('prodi-list');
+  if (!container) return;
   container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat daftar prodi...</div>';
   
   const result = await callAPI('getRtlProdiList');
@@ -161,7 +176,10 @@ async function loadProdi() {
 
 function renderProdi() {
   const container = document.getElementById('prodi-list');
-  const searchFilter = document.getElementById('filter-search').value.toLowerCase();
+  if (!container) return;
+  
+  const searchEl = document.getElementById('filter-search');
+  const searchFilter = searchEl ? searchEl.value.toLowerCase() : '';
   
   let filtered = prodiList.filter(p => {
     if (searchFilter && !p.subsatker.toLowerCase().includes(searchFilter)) return false;
@@ -232,7 +250,8 @@ function toggleVisibility(index, field) {
 
 function updateBadgeCount() {
   const count = prodiList.filter(p => p.selected).length;
-  document.getElementById('badge-count').textContent = count + ' prodi';
+  const el = document.getElementById('badge-count');
+  if (el) el.textContent = count + ' prodi';
 }
 
 function resetProdiSelection() {
@@ -265,6 +284,7 @@ async function saveProdiSelection() {
   btn.textContent = '💾 Simpan Semua Prodi';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     await loadProdi();
   } else {

@@ -1,25 +1,55 @@
 // ============================================
 // dashboard.js - Logic halaman dashboard auditee
+// + Optimasi: cache getRekap, load paralel, skip chart auditee
 // ============================================
 
 let allDocs = [];
 let currentUser = null;
 let selectedSubsatker = '';
+let cachedRekap = null;   // ← cache global untuk getRekap
 
 window.addEventListener('load', async () => {
   const session = requireLogin();
   if (!session) return;
   
+  // ===== Guard: cek user ada =====
+  if (!session.user || !session.user.nama) {
+    console.warn('Session user kosong, redirect ke login');
+    clearSession();
+    window.location.href = 'index.html';
+    return;
+  }
+  
   currentUser = session.user;
   renderUserInfo();
-  await setupSubsatkerFilter();
-  await loadDocs();
-  await loadCharts();
   
-  // Load RTL & Audit info (khusus auditee)
+  // ===== Ambil getRekap 1x (kalau admin/verif/auditor) =====
+  if (currentUser.role !== 'auditee') {
+    cachedRekap = await callAPI('getRekap');
+  }
+  
+  // ===== Load paralel =====
+  const tasks = [
+    setupSubsatkerFilter(),
+    loadDocs()
+  ];
+  
+  // Chart hanya untuk admin/verif/auditor
+  if (currentUser.role !== 'auditee') {
+    tasks.push(loadCharts());
+  } else {
+    const chartSection = document.getElementById('chart-section');
+    if (chartSection) chartSection.style.display = 'none';
+  }
+  
+  await Promise.all(tasks);
+  
+  // ===== Load RTL & Audit info (khusus auditee) =====
   if (currentUser.role === 'auditee') {
-    await loadRtlInfo();
-    await loadAuditResult();
+    await Promise.all([
+      loadRtlInfo(),
+      loadAuditResult()
+    ]);
   }
 });
 
@@ -46,12 +76,13 @@ function renderUserInfo() {
       'Pilih subsatker untuk melihat dan mengelola dokumen';
   }
   
-  // ===== Role-Based Menu =====
+  // ===== Menu Verifikasi =====
   if (currentUser.role === 'verifikator' || currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-verifikasi');
     if (el) el.style.display = 'flex';
   }
   
+  // ===== Menu Audit & Presensi =====
   if (currentUser.role === 'auditor' || currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-audit');
     if (el) el.style.display = 'flex';
@@ -59,12 +90,131 @@ function renderUserInfo() {
     if (elAbsensi) elAbsensi.style.display = 'flex';
   }
   
+  // ===== Menu khusus Administrator =====
   if (currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-manage-user');
     if (el) el.style.display = 'flex';
     
     const elRtl = document.getElementById('sidebar-manage-rtl');
     if (elRtl) elRtl.style.display = 'flex';
+  }
+  
+  // ===== Menu Rekap: tampil untuk administrator & auditor =====
+  if (currentUser.role === 'administrator' || currentUser.role === 'auditor') {
+    const elRekap = document.getElementById('sidebar-rekap');
+    if (elRekap) elRekap.style.display = 'flex';
+  }
+  
+  // ===== Sembunyikan card kategori kalau role = auditee =====
+  if (currentUser.role === 'auditee') {
+    const kategoriSection = document.getElementById('stat-category-section');
+    if (kategoriSection) kategoriSection.style.display = 'none';
+  }
+  
+  // ===== Banner Pintasan (Verifikator & Auditor) =====
+  renderBannerPintasan();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
+}
+
+// ============================================
+// BANNER PINTASAN (Verifikator / Auditor)
+// ============================================
+function renderBannerPintasan() {
+  const role = currentUser.role;
+  
+  const oldBanner = document.getElementById('banner-pintasan');
+  if (oldBanner) oldBanner.remove();
+  
+  if (role !== 'verifikator' && role !== 'auditor') return;
+  
+  const welcomeCard = document.querySelector('.welcome-card');
+  if (!welcomeCard) return;
+  
+  let bannerHtml = '';
+  
+  if (role === 'verifikator') {
+    bannerHtml = `
+      <div id="banner-pintasan" class="card" style="background:linear-gradient(135deg,#0F3D2E 0%,#2A9D8F 100%);color:white;border-left:4px solid #A7D129;margin-bottom:20px;padding:24px 28px;position:relative;overflow:hidden;">
+        <div style="position:relative;z-index:1;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:250px;">
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;color:white;letter-spacing:-0.3px;">
+                🎯 Selamat datang, Verifikator!
+              </h2>
+              <p style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:12px;">
+                Tugas Anda adalah <strong>memverifikasi link dokumen</strong> yang di-submit auditee. Pastikan link bisa dibuka dan tidak ada revisi.
+              </p>
+              <div id="banner-pintasan-stat" style="font-size:13px;color:rgba(255,255,255,0.95);padding:10px 14px;background:rgba(255,255,255,0.1);border-radius:8px;display:inline-block;">
+                ⏳ Memuat statistik...
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;">
+              <a href="verifikasi.html" class="btn" style="background:#A7D129;color:#0F3D2E;font-weight:700;padding:14px 24px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.2);">
+                ✅ Ke Halaman Verifikasi →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (role === 'auditor') {
+    bannerHtml = `
+      <div id="banner-pintasan" class="card" style="background:linear-gradient(135deg,#0F3D2E 0%,#2A9D8F 100%);color:white;border-left:4px solid #A7D129;margin-bottom:20px;padding:24px 28px;position:relative;overflow:hidden;">
+        <div style="position:relative;z-index:1;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:250px;">
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;color:white;letter-spacing:-0.3px;">
+                🎯 Selamat datang, Auditor!
+              </h2>
+              <p style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:12px;">
+                Tugas Anda adalah <strong>mengaudit dokumen ISO</strong> dan <strong>menilai RTL</strong> satker yang di-assign.
+              </p>
+            </div>
+            <div style="display:flex;align-items:center;">
+              <a href="audit.html" class="btn" style="background:#A7D129;color:#0F3D2E;font-weight:700;padding:14px 24px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.2);">
+                🔍 Ke Halaman Audit →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  welcomeCard.insertAdjacentHTML('afterend', bannerHtml);
+  
+  if (role === 'verifikator') {
+    loadBannerStatistik();
+  }
+}
+
+async function loadBannerStatistik() {
+  const statEl = document.getElementById('banner-pintasan-stat');
+  if (!statEl) return;
+  
+  try {
+    const result = await callAPI('getDocsForVerification');
+    if (result.success && result.stats) {
+      const menunggu = result.stats.menunggu || 0;
+      const revisi = result.stats.revisi || 0;
+      
+      if (menunggu === 0 && revisi === 0) {
+        statEl.innerHTML = '🎉 Tidak ada dokumen menunggu verifikasi';
+      } else {
+        let html = '';
+        if (menunggu > 0) {
+          html += `📤 <strong>${menunggu}</strong> dokumen menunggu verifikasi`;
+        }
+        if (revisi > 0) {
+          html += (html ? ' · ' : '') + `🔄 <strong>${revisi}</strong> dokumen revisi baru`;
+        }
+        statEl.innerHTML = html;
+      }
+    }
+  } catch (e) {
+    statEl.innerHTML = '';
   }
 }
 
@@ -75,7 +225,8 @@ async function setupSubsatkerFilter() {
   if (!filterEl) return;
   filterEl.style.display = 'block';
   
-  const result = await callAPI('getSubsatkerList');
+  // ===== Pakai cache (5 menit) =====
+  const result = await callAPIWithCache('getSubsatkerList', {}, 5 * 60 * 1000);
   if (!result.success) return;
   
   result.data.forEach(s => {
@@ -102,33 +253,49 @@ async function loadDocs() {
                           currentUser.role === 'verifikator' || 
                           currentUser.role === 'auditor';
   
-  // ============================================
-  // KALAU BELUM PILIH SUBSATKER (ADMIN/VERIF/AUDITOR)
-  // Tampilkan angka agregat semua satker
-  // ============================================
   if (isAdminOrStaff && !selectedSubsatker) {
-    const aggregateResult = await callAPI('getRekap');
+    // ===== Pakai cachedRekap kalau ada =====
+    const aggregateResult = cachedRekap || await callAPI('getRekap');
     
     if (aggregateResult.success && aggregateResult.data) {
       let totalDocs = 0;
       let totalVerified = 0;
+      let totalTersedia = 0;
       
       aggregateResult.data.forEach(item => {
         totalDocs += item.total || 0;
         totalVerified += item.verified || 0;
+        totalTersedia += item.tersedia || 0;
       });
       
-      const totalKosong = totalDocs - totalVerified;
+      const totalKosong = totalDocs - totalTersedia;
       const totalPercent = totalDocs > 0 ? Math.round((totalVerified / totalDocs) * 100) : 0;
       
       document.getElementById('stat-total').textContent = totalDocs;
-      document.getElementById('stat-tersedia').textContent = totalVerified;
+      document.getElementById('stat-tersedia').textContent = totalTersedia;
       document.getElementById('stat-verified').textContent = totalVerified;
       document.getElementById('stat-kosong').textContent = totalKosong;
       document.getElementById('stat-progress').textContent = totalPercent + '%';
       
       document.getElementById('progress-value').textContent = totalPercent + '%';
       document.getElementById('progress-fill').style.width = totalPercent + '%';
+      
+      const kategoriProdi = aggregateResult.data.filter(r => 
+        /^(D3|S1|S2|S3|Profesi|Spesialis)\s/i.test(r.subsatker)
+      );
+      const kategoriSatker = aggregateResult.data.filter(r => {
+        const isProdi = /^(D3|S1|S2|S3|Profesi|Spesialis)\s/i.test(r.subsatker);
+        const isLab = /Laboratorium/i.test(r.subsatker);
+        return !isProdi && !isLab;
+      });
+      const kategoriLab = aggregateResult.data.filter(r => 
+        /Laboratorium/i.test(r.subsatker)
+      );
+      
+      updateKategoriCard('prodi', kategoriProdi);
+      updateKategoriCard('satker', kategoriSatker);
+      updateKategoriCard('lab', kategoriLab);
+      
     } else {
       updateStats([]);
     }
@@ -144,9 +311,6 @@ async function loadDocs() {
     return;
   }
   
-  // ============================================
-  // KALAU SUDAH PILIH SUBSATKER (atau role = auditee)
-  // ============================================
   const payload = {};
   if (selectedSubsatker) payload.subsatker = selectedSubsatker;
   
@@ -192,10 +356,27 @@ async function loadAuditSummary(subsatker) {
   card.style.display = 'block';
 }
 
+// ============================================
+// UPDATE STATS — pakai getParentStatus()
+// ============================================
 function updateStats(docs) {
   const total = docs.length;
-  const tersedia = docs.filter(d => d.status !== 'kosong' && d.status !== 'draft').length;
-  const verified = docs.filter(d => d.status === 'verified' || d.status === 'audited_pass').length;
+  
+  let tersedia = 0;
+  let verified = 0;
+  
+  docs.forEach(doc => {
+    const status = getParentStatus(doc);
+    
+    if (status !== 'kosong' && status !== 'draft') {
+      tersedia++;
+    }
+    
+    if (status === 'verified' || status === 'audited_pass') {
+      verified++;
+    }
+  });
+  
   const kosong = total - tersedia;
   const percent = total > 0 ? Math.round((verified / total) * 100) : 0;
   
@@ -207,6 +388,40 @@ function updateStats(docs) {
   
   document.getElementById('progress-value').textContent = percent + '%';
   document.getElementById('progress-fill').style.width = percent + '%';
+}
+
+// ============================================
+// UPDATE CARD KATEGORI (Prodi / Satker / Lab)
+// ============================================
+function updateKategoriCard(kategori, items) {
+  const totalSatker = items.length;
+  let totalDocs = 0;
+  let totalVerified = 0;
+  let totalTersedia = 0;
+  
+  items.forEach(item => {
+    totalDocs += item.total || 0;
+    totalVerified += item.verified || 0;
+    totalTersedia += item.tersedia || 0;
+  });
+  
+  const tersediaPercent = totalDocs > 0 
+    ? Math.round((totalTersedia / totalDocs) * 100) 
+    : 0;
+  
+  const verifiedPercent = totalDocs > 0 
+    ? Math.round((totalVerified / totalDocs) * 100) 
+    : 0;
+  
+  const elTotal = document.getElementById('stat-' + kategori + '-total');
+  const elTersedia = document.getElementById('stat-' + kategori + '-tersedia');
+  const elVerified = document.getElementById('stat-' + kategori + '-verified');
+  const elProgress = document.getElementById('stat-' + kategori + '-progress');
+  
+  if (elTotal) elTotal.textContent = totalSatker;
+  if (elTersedia) elTersedia.textContent = tersediaPercent + '%';
+  if (elVerified) elVerified.textContent = verifiedPercent + '%';
+  if (elProgress) elProgress.style.width = verifiedPercent + '%';
 }
 
 // ============================================
@@ -223,6 +438,38 @@ function getStatusBadge(status) {
     'audited_fail':  '<span class="badge badge-warning">⚠️ Perlu Perbaikan<br><small>Lihat catatan</small></span>'
   };
   return badges[status] || badges['kosong'];
+}
+
+// ============================================
+// HITUNG STATUS PARENT DARI ANAK
+// ============================================
+function getParentStatus(doc) {
+  if (!doc.hasSubs || !doc.subs || doc.subs.length === 0) {
+    return doc.status;
+  }
+  
+  const subStatuses = doc.subs.map(s => s.status || 'kosong');
+  
+  const allEmpty = subStatuses.every(s => s === 'kosong' || s === 'draft');
+  if (allEmpty) return 'kosong';
+  
+  const hasFail = subStatuses.some(s => s === 'rejected' || s === 'audited_fail');
+  if (hasFail) return 'audited_fail';
+  
+  const allVerified = subStatuses.every(s => 
+    s === 'verified' || s === 'audited_pass'
+  );
+  if (allVerified) return 'verified';
+  
+  const hasSubmitted = subStatuses.some(s => s === 'submitted');
+  if (hasSubmitted) return 'submitted';
+  
+  const hasVerified = subStatuses.some(s => 
+    s === 'verified' || s === 'audited_pass'
+  );
+  if (hasVerified) return 'verified';
+  
+  return 'kosong';
 }
 
 // ============================================
@@ -263,7 +510,6 @@ function renderDocs() {
     return;
   }
   
-  // Cek apakah prodi ini punya RTL (ada dokumen kategori B)
   const hasRTL = allDocs.some(d => d.kategori === 'B');
   
   let html = `
@@ -281,12 +527,13 @@ function renderDocs() {
   `;
   
   filtered.forEach((doc, index) => {
-    const statusBadge = getStatusBadge(doc.status);
     const hasSubs = doc.hasSubs === true;
     const isAuditee = currentUser.role === 'auditee';
     const isRTL = doc.kategori === 'B';
     
-    // ===== Kategori Badge =====
+    const parentStatus = getParentStatus(doc);
+    const statusBadge = getStatusBadge(parentStatus);
+    
     let kategoriBadge;
     if (hasRTL) {
       kategoriBadge = doc.kategori === 'A'
@@ -296,43 +543,35 @@ function renderDocs() {
       kategoriBadge = '<span class="badge" style="background:#D1FAE5;color:#065F46;">100%</span>';
     }
     
-    // ===== Actions untuk Parent =====
     const actions = [];
     
     if (hasSubs) {
       actions.push(`<button class="btn btn-secondary btn-sm" onclick="toggleSubs('${doc.docID}')" id="btn-toggle-${doc.docID}">📂 Detail</button>`);
     } else if (isRTL) {
-      // ===== RTL: tombol "Lihat" (link dari admin) =====
       if (doc.link) {
         actions.push(`<a href="${escapeHtml(doc.link)}" target="_blank" class="btn btn-primary btn-sm">🔗 Lihat</a>`);
       } else {
         actions.push(`<button class="btn btn-secondary btn-sm" onclick="alert('Link RTL belum diatur oleh administrator.\\n\\nSilakan hubungi admin ISO.')">🔗 Lihat RTL</button>`);
       }
       
-      // Tombol catatan (kalau ada catatan dari verifikator/auditor)
       if (doc.status !== 'kosong' && doc.status !== 'draft' && (doc.verifikator_catatan || doc.auditor_catatan)) {
         actions.push(`<button class="btn btn-sm" style="background:#6B7280;color:white;" onclick="showDetail('${doc.docID}')">📝 Catatan</button>`);
       }
     } else {
-      // ===== DOKUMEN BIASA =====
       const canEdit = isAuditee && ['kosong', 'draft', 'submitted', 'rejected', 'audited_fail'].indexOf(doc.status) !== -1;
       const canFillNew = isAuditee && (doc.status === 'kosong' || doc.status === 'draft');
       
-      // Tombol "Isi" (kalau belum ada link)
       if (canFillNew) {
         actions.push(`<button class="btn btn-primary btn-sm" onclick="openInput('${doc.docID}')">Isi</button>`);
       }
       
-      // Tombol "Lihat" (kalau sudah ada link)
       if (doc.link) {
         actions.push(`<a href="${escapeHtml(doc.link)}" target="_blank" class="btn btn-secondary btn-sm">🔗 Lihat</a>`);
       }
       
-      // Tombol "Edit" (kalau sudah submit/reject/fail — boleh revisi)
       if (canEdit && doc.link && doc.status !== 'kosong' && doc.status !== 'draft') {
         const isRevisi = doc.status === 'rejected' || doc.status === 'audited_fail';
         if (isRevisi) {
-          // Untuk dokumen revisi: tombol "Submit Revisi" (tanpa ubah link) + "Edit Link"
           actions.push(`<button class="btn btn-sm" style="background:#059669;color:white;" onclick="submitRevisi('${doc.docID}')">🔄 Submit Revisi</button>`);
           actions.push(`<button class="btn btn-sm" style="background:#D97706;color:white;" onclick="openInput('${doc.docID}')">✏️ Edit Link</button>`);
         } else {
@@ -340,7 +579,6 @@ function renderDocs() {
         }
       }
       
-      // Tombol "Catatan"
       if (doc.status !== 'kosong' && doc.status !== 'draft' && (doc.verifikator_catatan || doc.auditor_catatan)) {
         actions.push(`<button class="btn btn-sm" style="background:#6B7280;color:white;" onclick="showDetail('${doc.docID}')">📝 Catatan</button>`);
       }
@@ -363,7 +601,6 @@ function renderDocs() {
       </tr>
     `;
     
-    // ===== Sub-items =====
     if (hasSubs) {
       doc.subs.forEach((sub) => {
         const subStatus = getStatusBadge(sub.status);
@@ -519,10 +756,8 @@ function closeDetailModal() {
 // OPEN INPUT (Isi / Edit Link)
 // ============================================
 function openInput(docID) {
-  // Cari dokumen di parent
   let doc = allDocs.find(d => d.docID === docID);
   
-  // Kalau tidak ada, cari di sub
   if (!doc) {
     for (const parent of allDocs) {
       if (parent.subs) {
@@ -560,6 +795,7 @@ async function saveLink(docID, link) {
   const result = await callAPI('submitLink', { docID, link });
   
   if (result.success) {
+    clearAPICache();
     showToast('✅ Link berhasil disimpan!');
     await loadDocs();
   } else {
@@ -575,7 +811,8 @@ let chartDonutInstance = null;
 let currentChartType = 'bar';
 
 async function loadCharts() {
-  const result = await callAPI('getRekap');
+  // ===== Pakai cachedRekap kalau ada =====
+  const result = cachedRekap || await callAPI('getRekap');
   
   if (!result.success || !result.data) {
     document.getElementById('chart-section').style.display = 'none';
@@ -584,7 +821,6 @@ async function loadCharts() {
   
   const data = result.data;
   
-  // Group by Fakultas
   const fakultasMap = {
     'Fakultas Teknik': [],
     'Fakultas Ekonomi dan Bisnis': [],
@@ -600,7 +836,6 @@ async function loadCharts() {
     const subsatker = item.subsatker;
     let fakultas = 'Satuan Kerja Pendukung';
     
-    // Deteksi fakultas berdasarkan prefix subsatker
     if (subsatker.match(/^D3|^S1|^S2|^S3|^Profesi/) && 
         (subsatker.includes('Teknik'))) {
       fakultas = 'Fakultas Teknik';
@@ -622,7 +857,6 @@ async function loadCharts() {
     fakultasMap[fakultas].push(item.skor);
   });
   
-  // Hitung rata-rata per fakultas
   const fakultasLabels = [];
   const fakultasScores = [];
   
@@ -633,14 +867,12 @@ async function loadCharts() {
     fakultasScores.push(Math.round(avg * 10) / 10);
   });
   
-  // Warna berdasarkan skor
   const barColors = fakultasScores.map(skor => {
     if (skor >= 90) return '#059669';
     if (skor >= 70) return '#D97706';
     return '#DC2626';
   });
   
-  // ===== Chart Bar =====
   const ctxBar = document.getElementById('chart-bar').getContext('2d');
   
   if (chartBarInstance) chartBarInstance.destroy();
@@ -697,7 +929,6 @@ async function loadCharts() {
     }
   });
   
-  // ===== Chart Donut =====
   const excellent = data.filter(d => d.skor >= 90).length;
   const good = data.filter(d => d.skor >= 70 && d.skor < 90).length;
   const poor = data.filter(d => d.skor < 70).length;
@@ -741,7 +972,6 @@ async function loadCharts() {
     }
   });
   
-  // Legend manual
   const legendHtml = `
     <div class="donut-legend-item">
       <div class="donut-legend-color" style="background:#059669;"></div>
@@ -789,7 +1019,7 @@ function switchChart(type) {
 }
 
 // ============================================
-// RTL Info — untuk auditee prodi dengan RTL
+// RTL Info
 // ============================================
 async function loadRtlInfo() {
   const card = document.getElementById('rtl-card');
@@ -802,7 +1032,7 @@ async function loadRtlInfo() {
     return;
   }
   
-   const link = result.data.link_rtl;
+  const link = result.data.link_rtl;
   const rtlStatus = result.data.rtl_status || 'kosong';
   const auditorCatatan = result.data.auditor_catatan || '';
   const verifikatorCatatan = result.data.verifikator_catatan || '';
@@ -816,24 +1046,17 @@ async function loadRtlInfo() {
   const btn = document.getElementById('btn-rtl-confirm');
   const header = card.querySelector('h2');
   
-  // ============================================
-  // TAMPILKAN STATUS SESUAI KONDISI
-  // ============================================
-  
   if (rtlStatus === 'audited_pass') {
-    // Sudah lolos audit
     card.querySelector('.badge').textContent = '✅ Selesai';
     card.querySelector('.badge').className = 'badge badge-success';
     if (header) header.textContent = '✅ RTL Sudah Lolos Audit';
     statusInfo.innerHTML = '<span style="color:#059669;font-weight:700;">✅ RTL sudah lolos audit — tidak perlu tindakan</span>';
     btn.style.display = 'none';
     
-    // Sembunyikan text "Silakan lengkapi dokumen"
     const descEl = card.querySelector('p');
     if (descEl) descEl.textContent = 'RTL untuk prodi/satker Anda sudah lolos audit. Terima kasih.';
     
   } else if (rtlStatus === 'verified') {
-    // Sudah diverifikasi
     card.querySelector('.badge').textContent = '⏳ Menunggu Audit';
     card.querySelector('.badge').className = 'badge badge-info';
     if (header) header.textContent = '📋 RTL Sudah Diverifikasi';
@@ -844,7 +1067,6 @@ async function loadRtlInfo() {
     btn.textContent = '✅ Sudah Diverifikasi';
     
   } else if (rtlStatus === 'submitted') {
-    // Menunggu verifikasi
     card.querySelector('.badge').textContent = '⏳ Menunggu Verifikasi';
     card.querySelector('.badge').className = 'badge badge-info';
     statusInfo.innerHTML = '<span style="color:#1E40AF;font-weight:700;">📤 Menunggu verifikasi</span>';
@@ -853,12 +1075,10 @@ async function loadRtlInfo() {
     btn.style.cursor = 'not-allowed';
     btn.textContent = '📤 Menunggu Verifikasi';
     
-    } else if (rtlStatus === 'rejected' || rtlStatus === 'audited_fail') {
-    // Perlu perbaikan
+  } else if (rtlStatus === 'rejected' || rtlStatus === 'audited_fail') {
     card.querySelector('.badge').textContent = '⚠️ Perlu Perbaikan';
     card.querySelector('.badge').className = 'badge badge-warning';
     
-    // ===== TAMPILKAN CATATAN =====
     let catatanHtml = '<span style="color:#DC2626;font-weight:700;">❌ Perlu perbaikan</span>';
     
     if (auditorCatatan) {
@@ -887,7 +1107,6 @@ async function loadRtlInfo() {
     btn.textContent = '✅ Konfirmasi Selesai';
     
   } else {
-    // Belum dikonfirmasi (kosong)
     statusInfo.innerHTML = '<span style="color:#D97706;font-weight:700;">⏳ Belum dikonfirmasi</span>';
     btn.disabled = false;
     btn.style.background = '#059669';
@@ -922,6 +1141,7 @@ async function confirmRtl() {
   const result = await callAPI('confirmRtlDone', { docID });
   
   if (result.success) {
+    clearAPICache();
     showToast('✅ ' + result.message);
     await loadDocs();
     await loadRtlInfo();
@@ -956,10 +1176,9 @@ async function loadAuditResult() {
 }
 
 // ============================================
-// SUBMIT REVISI (tanpa ubah link)
+// SUBMIT REVISI
 // ============================================
 async function submitRevisi(docID) {
-  // Cari dokumen
   let doc = allDocs.find(d => d.docID === docID);
   
   if (!doc) {
@@ -986,10 +1205,10 @@ async function submitRevisi(docID) {
   
   if (!konfirmasi) return;
   
-  // ⚠️ PENTING: Panggil action 'submitRevisi' (bukan 'submitLink')
   const result = await callAPI('submitRevisi', { docID: docID });
   
   if (result.success) {
+    clearAPICache();
     showToast('✅ Revisi terkirim ke verifikator!');
     await loadDocs();
   } else {

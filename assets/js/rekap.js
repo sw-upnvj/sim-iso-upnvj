@@ -1,6 +1,7 @@
 // ============================================
 // rekap.js - Logic halaman rekap admin
 // Formula: Skor = (verified / total) × 100%
+// + cache getRekap (2 menit) + hideEmptySections
 // ============================================
 
 let allRekap = [];
@@ -34,29 +35,37 @@ function renderUserInfo() {
     .toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   
-  // Tampilkan menu khusus per role
+  // ===== Menu Rekap (halaman aktif) =====
+  showMenuRekap();
+  
+  // ===== Menu Verifikasi =====
   if (currentUser.role === 'administrator') {
-    const el = document.getElementById('sidebar-manage-user');
-    if (el) el.style.display = 'flex';
     const elVerif = document.getElementById('sidebar-verifikasi');
     if (elVerif) elVerif.style.display = 'flex';
-    const elAudit = document.getElementById('sidebar-audit');
-    if (elAudit) elAudit.style.display = 'flex';
-    const elAbsensi = document.getElementById('sidebar-absensi');       // ← TAMBAH
-    if (elAbsensi) elAbsensi.style.display = 'flex';                    // ← TAMBAH
-  } else if (currentUser.role === 'auditor') {
-    const elAudit = document.getElementById('sidebar-audit');
-    if (elAudit) elAudit.style.display = 'flex';
-    const elAbsensi = document.getElementById('sidebar-absensi');       // ← TAMBAH
-    if (elAbsensi) elAbsensi.style.display = 'flex';                    // ← TAMBAH
   }
+  
+  // ===== Menu Audit + Presensi =====
+  if (currentUser.role === 'administrator' || currentUser.role === 'auditor') {
+    showMenuPresensi();
+    const elAudit = document.getElementById('sidebar-audit');
+    if (elAudit) elAudit.style.display = 'flex';
+  }
+  
+  // ===== Menu Admin =====
+  showMenuAdmin();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
 }
 
-async function loadRekap() {
+async function loadRekap(forceRefresh = false) {
   const container = document.getElementById('table-container');
   container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat data...</div>';
   
-  const result = await callAPI('getRekap');
+  // ===== Pakai cache (2 menit) =====
+  const result = forceRefresh
+    ? await callAPI('getRekap')
+    : await callAPIWithCache('getRekap', {}, 2 * 60 * 1000);
   
   if (!result.success) {
     container.innerHTML = `<div class="alert alert-error">❌ ${escapeHtml(result.message)}</div>`;
@@ -206,6 +215,15 @@ function exportCSV() {
   link.click();
   
   showToast('✅ CSV berhasil di-download');
+}
+
+// ============================================
+// REFRESH — dipanggil dari tombol Refresh
+// ============================================
+async function refreshData() {
+  clearAPICache();
+  await loadRekap(true);
+  showToast('✅ Data berhasil di-refresh');
 }
 
 function logout() {

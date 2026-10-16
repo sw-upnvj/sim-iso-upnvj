@@ -52,6 +52,12 @@ function renderUserInfo() {
     const elRtl = document.getElementById('sidebar-manage-rtl');
     if (elRtl) elRtl.style.display = 'flex';
   }
+  
+  // ===== Menu Rekap (admin & auditor) =====
+  showMenuRekap();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
 }
 
 // ============================================
@@ -71,13 +77,12 @@ async function loadProdiList(forceRefresh = false) {
   
   allProdi = result.data || [];
   
-    const totalProdi = allProdi.length;
+  const totalProdi = allProdi.length;
   const rtlCount = allProdi.filter(p => p.hasRtl).length;
   const avgSkor = totalProdi > 0 
     ? Math.round(allProdi.reduce((s, p) => s + p.skor, 0) / totalProdi * 10) / 10 
     : 0;
   
-  // ===== Hitung satker yang punya minimal 1 dokumen verified =====
   const satkerVerified = allProdi.filter(p => p.verified > 0).length;
   
   const elTotalProdi = document.getElementById('stat-total-prodi');
@@ -181,25 +186,45 @@ async function openAudit(subsatker) {
     
     const rtl = data.rtl[0];
     
-    document.getElementById('rtl-link-auditee').textContent = rtl.link_auditee || '-';
-    document.getElementById('rtl-link-auditee').href = rtl.link_auditee || '#';
-    document.getElementById('rtl-btn-auditee').href = rtl.link_auditee || '#';
+    const linkReview = rtl.link_auditee || '';
+    const linkEl = document.getElementById('rtl-link-review');
+    const btnEl = document.getElementById('rtl-btn-review');
     
+    if (linkEl) {
+      if (linkReview) {
+        linkEl.textContent = linkReview;
+        linkEl.href = linkReview;
+        linkEl.style.color = '#1E40AF';
+      } else {
+        linkEl.textContent = 'Belum ada link';
+        linkEl.href = '#';
+        linkEl.style.color = '#9CA3AF';
+      }
+    }
+    if (btnEl) {
+      btnEl.href = linkReview || '#';
+      if (!linkReview) {
+        btnEl.style.background = '#9CA3AF';
+        btnEl.style.cursor = 'not-allowed';
+        btnEl.onclick = (e) => { e.preventDefault(); alert('Link RTL belum diatur admin'); };
+      } else {
+        btnEl.style.background = '#D97706';
+        btnEl.style.cursor = 'pointer';
+        btnEl.onclick = null;
+      }
+    }
+    
+    // Status info
     const statusInfo = document.getElementById('rtl-status-info');
     if (rtl.status === 'submitted') {
-      statusInfo.innerHTML = '<span class="badge badge-info">📤 Submitted</span> <span style="font-size:12px;color:#6B7280;">— Siap direview</span>';
+      statusInfo.innerHTML = '<span class="badge badge-info">📤 Submitted</span>';
     } else if (rtl.status === 'verified') {
       statusInfo.innerHTML = '<span class="badge badge-success">✅ Terverifikasi</span>';
     } else if (rtl.status === 'rejected') {
       statusInfo.innerHTML = '<span class="badge badge-danger">❌ Ditolak</span>';
     } else {
-      statusInfo.innerHTML = '<span class="badge badge-gray">❌ Belum submit</span>';
+      statusInfo.innerHTML = '<span class="badge badge-gray">📭 Belum submit</span>';
     }
-    
-    const linkAdmin = data.link_audit_admin || '';
-    document.getElementById('rtl-link-admin').textContent = linkAdmin || 'Belum diatur';
-    document.getElementById('rtl-link-admin').href = linkAdmin || '#';
-    document.getElementById('rtl-btn-admin').href = linkAdmin || '#';
     
     if (data.rtl_assessment) {
       document.querySelectorAll('input[name="status-rtl"]').forEach(r => {
@@ -345,6 +370,7 @@ async function submitAuditPass() {
   btn.textContent = '✅ Lolos';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     closeAuditModal();
     await openAudit(currentProdi);
@@ -377,6 +403,7 @@ async function submitAuditFail() {
   btn.textContent = '❌ Tidak Lolos';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     closeAuditModal();
     await openAudit(currentProdi);
@@ -401,6 +428,7 @@ async function saveSummary() {
   btn.textContent = '💾 Simpan 3 Poin';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
   } else {
     showToast('❌ ' + result.message, 'error');
@@ -499,6 +527,7 @@ async function saveRtlAssessment() {
   }
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
   } else {
     showToast('❌ ' + result.message, 'error');
@@ -541,6 +570,7 @@ async function saveRtlAssessmentSectionC() {
   }
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     await loadProdiList(true);
   } else {

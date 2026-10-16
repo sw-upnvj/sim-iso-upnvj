@@ -28,9 +28,12 @@
       <a href="dashboard.html"><span class="sidebar-menu-icon">🏠</span> Dashboard</a>
       <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;"><span class="sidebar-menu-icon">✅</span> Verifikasi</a>
       <a href="audit.html" class="active"><span class="sidebar-menu-icon">🔍</span> Audit</a>
-      <a href="absensi.html" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Absensi</a>
+      <a href="absensi.html" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Presensi</a>
       <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
-      <a href="rekap.html"><span class="sidebar-menu-icon">📊</span> Rekap</a>
+        <a href="rekap.html" id="sidebar-rekap" style="display:none;">
+          <span class="sidebar-menu-icon">📊</span>
+          Rekap
+        </a>
       <a href="manage-user.html" id="sidebar-manage-user" style="display:none;"><span class="sidebar-menu-icon">👥</span> Kelola User</a>
       <a href="manage-rtl.html" id="sidebar-manage-rtl" style="display:none;">
         <span class="sidebar-menu-icon">🔗</span>
@@ -133,7 +136,7 @@
               <p id="audit-subtitle">-</p>
             </div>
             <div class="page-header-actions">
-              <button class="btn" onclick="backToSectionA()">← Kembali ke Daftar Prodi</button>
+              <button class="btn" onclick="backToSectionA()">← Kembali ke Daftar Satker</button>
             </div>
           </div>
         </div>
@@ -146,29 +149,17 @@
           </div>
           
           <div style="margin-top:20px;">
-            <!-- Link RTL dari Auditee -->
+            <!-- Link RTL dari Admin (untuk auditor review) -->
             <div style="background:white;padding:16px;border-radius:8px;margin-bottom:16px;">
-              <div style="font-size:12px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:8px;">
-                📄 Link RTL dari Auditee
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                <div style="font-size:12px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">
+                  📄 Link RTL 2025
+                </div>
+                <div id="rtl-status-info" style="font-size:13px;"></div>
               </div>
-              <a id="rtl-link-auditee" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;display:block;margin-bottom:12px;">-</a>
-              <a id="rtl-btn-auditee" href="#" target="_blank" class="btn btn-primary btn-sm" style="background:#D97706;">
-                🔗 Buka Link RTL Auditee
-              </a>
-              <div id="rtl-status-info" style="margin-top:12px;font-size:13px;"></div>
-            </div>
-            
-            <!-- Link Audit dari Admin -->
-            <div style="background:white;padding:16px;border-radius:8px;margin-bottom:16px;">
-              <div style="font-size:12px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:8px;">
-                📝 Link Audit 2026 dari Administrator
-              </div>
-              <div style="font-size:12px;color:#D97706;margin-bottom:8px;font-weight:600;">
-                ⚡ Tulis hasil audit Anda di link ini
-              </div>
-              <a id="rtl-link-admin" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;display:block;margin-bottom:12px;">-</a>
-              <a id="rtl-btn-admin" href="#" target="_blank" class="btn btn-primary btn-sm" style="background:#D97706;">
-                📝 Buka Link Audit 2026
+              <a id="rtl-link-review" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;display:block;margin-bottom:12px;">-</a>
+              <a id="rtl-btn-review" href="#" target="_blank" class="btn btn-primary btn-sm" style="background:#D97706;">
+                🔗 Buka RTL untuk Review
               </a>
             </div>
             
@@ -249,7 +240,7 @@
               <p>Review dokumen RTL dari auditee & beri penilaian</p>
             </div>
             <div class="page-header-actions">
-              <button class="btn" onclick="backToSectionA()">← Kembali ke Daftar Prodi</button>
+              <button class="btn" onclick="backToSectionA()">← Kembali ke Daftar Satker</button>
             </div>
           </div>
         </div>

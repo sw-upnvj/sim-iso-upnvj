@@ -1,5 +1,6 @@
 // ============================================
 // manage-user.js - Logic kelola user (admin)
+// + hideEmptySections + clearAPICache setelah edit
 // ============================================
 
 let allUsers = [];
@@ -19,8 +20,12 @@ window.addEventListener('load', async () => {
   }
   
   renderUserInfo();
-  await loadSubsatkerList();
-  await loadUsers();
+  
+  // ===== Load paralel =====
+  await Promise.all([
+    loadSubsatkerList(),
+    loadUsers()
+  ]);
 });
 
 function renderUserInfo() {
@@ -47,18 +52,30 @@ function renderUserInfo() {
   
   const elAudit = document.getElementById('sidebar-audit');
   if (elAudit) elAudit.style.display = 'flex';
-
+  
   const elAbsensi = document.getElementById('sidebar-absensi');
-if (elAbsensi) elAbsensi.style.display = 'flex';
+  if (elAbsensi) elAbsensi.style.display = 'flex';
+  
+  // ===== Menu Rekap (admin) =====
+  showMenuRekap();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
 }
 
 async function loadSubsatkerList() {
-  const result = await callAPI('getSubsatkerListAll');
+  // ===== Pakai cache (5 menit) =====
+  const result = await callAPIWithCache('getSubsatkerListAll', {}, 5 * 60 * 1000);
   if (!result.success) return;
   
   subsatkerList = result.data || [];
   
   const select = document.getElementById('form-subsatker');
+  if (!select) return;
+  
+  // ===== Reset select =====
+  select.innerHTML = '<option value="">-- Pilih Subsatker --</option>';
+  
   subsatkerList.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s;
@@ -267,9 +284,10 @@ async function saveUser() {
   btn.textContent = 'Simpan';
   
   if (result.success) {
+    clearUsersCache();
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     closeModal();
-    clearUsersCache();
     await loadUsers(true);
   } else {
     showToast('❌ ' + result.message, 'error');
@@ -282,8 +300,9 @@ async function confirmDelete(email, nama) {
   const result = await callAPI('deleteUser', { email });
   
   if (result.success) {
-    showToast('✅ User berhasil dihapus');
     clearUsersCache();
+    clearAPICache();   // ← TAMBAH
+    showToast('✅ User berhasil dihapus');
     await loadUsers(true);
   } else {
     showToast('❌ ' + result.message, 'error');
@@ -296,6 +315,12 @@ function logout() {
   window.location.href = 'index.html';
 }
 
-document.getElementById('modal-overlay').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-overlay') closeModal();
-});
+// ============================================
+// EVENT LISTENER — Modal overlay klik luar
+// ============================================
+const modalOverlay = document.getElementById('modal-overlay');
+if (modalOverlay) {
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+}

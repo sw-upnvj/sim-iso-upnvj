@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Absensi Auditor - Sistem Informasi Manajemen ISO UPNVJ</title>
+  <title>Presensi Auditor - Sistem Informasi Manajemen ISO UPNVJ</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="icon" type="image/png" href="assets/img/logo-upn.png">
 </head>
@@ -28,10 +28,13 @@
       <a href="dashboard.html"><span class="sidebar-menu-icon">🏠</span> Dashboard</a>
       <a href="verifikasi.html" id="sidebar-verifikasi" style="display:none;"><span class="sidebar-menu-icon">✅</span> Verifikasi</a>
       <a href="audit.html" id="sidebar-audit" style="display:none;"><span class="sidebar-menu-icon">🔍</span> Audit</a>
-      <a href="absensi.html" class="active" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Absensi</a>
+      <a href="absensi.html" class="active" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Presensi</a>
       
       <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
-      <a href="rekap.html"><span class="sidebar-menu-icon">📊</span> Rekap</a>
+      <a href="rekap.html" id="sidebar-rekap" style="display:none;">
+        <span class="sidebar-menu-icon">📊</span>
+        Rekap
+      </a>
       <a href="manage-user.html" id="sidebar-manage-user" style="display:none;"><span class="sidebar-menu-icon">👥</span> Kelola User</a>
       <a href="manage-rtl.html" id="sidebar-manage-rtl" style="display:none;"><span class="sidebar-menu-icon">🔗</span> Kelola Link RTL</a>
       
@@ -50,7 +53,7 @@
     
     <div class="topbar">
       <div class="topbar-left">
-        <div class="topbar-page-title">Absensi Auditor</div>
+        <div class="topbar-page-title">Presensi Auditor</div>
       </div>
       <div class="topbar-right">
         <div class="user-chip">
@@ -70,8 +73,8 @@
       <div class="page-header">
         <div class="page-header-content">
           <div>
-            <h1>📋 Absensi & Dokumentasi Auditor</h1>
-            <p>Silakan absen kehadiran dan lihat dokumentasi kegiatan audit</p>
+            <h1>📋 Presensi & Dokumentasi Auditor</h1>
+            <p>Silakan isi presensi kehadiran dan lihat dokumentasi kegiatan audit</p>
           </div>
           <div class="page-header-actions">
             <button class="btn" onclick="loadLinks(true)">🔄 Refresh</button>
@@ -84,22 +87,22 @@
         <span class="spinner"></span> Memuat data...
       </div>
       
-      <!-- Card Absensi -->
+      <!-- Card Presensi -->
       <div class="card" id="card-absensi" style="display:none;">
         <div class="card-header">
-          <h2>📋 Link Absensi Auditor</h2>
+          <h2>📋 Presensi Kegiatan Audit Surveillance ISO</h2>
           <span class="badge badge-info">Wajib Diisi</span>
         </div>
         <div style="margin-top:16px;">
           <p style="font-size:14px;color:#374151;line-height:1.6;margin-bottom:16px;">
-            Silakan buka link di bawah untuk mengisi absensi kehadiran Anda sebagai auditor.
+             Silahkan upload lembar presensi kegiatan audit pada link gdrive berikut
           </p>
           <div style="background:#F9FAFB;padding:14px;border-radius:8px;margin-bottom:16px;">
-            <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">🔗 Link Absensi</div>
+            <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">🔗 Link Presensi</div>
             <a id="link-absensi-url" href="#" target="_blank" style="color:#1E40AF;font-size:13px;word-break:break-all;display:block;margin-bottom:12px;">-</a>
           </div>
           <a id="btn-buka-absensi" href="#" target="_blank" class="btn btn-primary" style="background:#D97706;">
-            🔗 Buka Link Absensi
+            🔗 Buka Link Presensi
           </a>
         </div>
       </div>
@@ -107,12 +110,12 @@
       <!-- Card Dokumentasi -->
       <div class="card" id="card-dokumentasi" style="display:none;background:linear-gradient(135deg,#ECFDF5 0%,#F0FDF4 100%);border-left:4px solid #059669;">
         <div class="card-header" style="border-bottom:1px solid #A7F3D0;">
-          <h2 style="color:#065F46;">📸 Dokumentasi Kegiatan</h2>
+          <h2 style="color:#065F46;">📸 Dokumentasi Kegiatan Audit Surveillance ISO</h2>
           <span class="badge badge-success">Tersedia</span>
         </div>
         <div style="margin-top:16px;">
           <p style="font-size:14px;color:#064E3B;line-height:1.6;margin-bottom:16px;">
-            Dokumentasi kegiatan audit dapat dilihat di link berikut. Silakan buka untuk melihat foto, video, dan materi terkait.
+            Silahkan upload foto dokumentasi kegiatan audit pada link gdrive berikut
           </p>
           <div style="background:white;padding:14px;border-radius:8px;margin-bottom:16px;">
             <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">🔗 Link Dokumentasi</div>
@@ -128,8 +131,8 @@
       <div class="card" id="card-empty" style="display:none;">
         <div class="empty-state" style="padding:60px 20px;">
           <div style="font-size:48px;margin-bottom:12px;">📭</div>
-          <h3 style="color:#374151;margin-bottom:8px;">Belum Ada Link Absensi & Dokumentasi</h3>
-          <p style="color:#6B7280;font-size:14px;">Administrator belum mengatur link absensi atau dokumentasi untuk tahun ini.</p>
+          <h3 style="color:#374151;margin-bottom:8px;">Belum Ada Link Presensi & Dokumentasi</h3>
+          <p style="color:#6B7280;font-size:14px;">Administrator belum mengatur link presensi atau dokumentasi untuk tahun ini.</p>
           <p style="color:#6B7280;font-size:13px;margin-top:8px;">Silakan hubungi admin ISO untuk informasi lebih lanjut.</p>
         </div>
       </div>

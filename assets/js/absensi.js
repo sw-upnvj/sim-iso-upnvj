@@ -1,5 +1,6 @@
 // ============================================
-// absensi.js - Halaman Absensi & Dokumentasi Auditor
+// absensi.js - Halaman Presensi & Dokumentasi Auditor
+// + cache getAbsensiLinks + hideEmptySections
 // ============================================
 
 let currentUser = null;
@@ -52,6 +53,12 @@ function renderUserInfo() {
     const elRtl = document.getElementById('sidebar-manage-rtl');
     if (elRtl) elRtl.style.display = 'flex';
   }
+  
+  // ===== Menu Rekap (admin & auditor) =====
+  showMenuRekap();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
 }
 
 // ============================================
@@ -63,13 +70,19 @@ async function loadLinks(forceRefresh = false) {
   const cardDokumentasi = document.getElementById('card-dokumentasi');
   const cardEmpty = document.getElementById('card-empty');
   
-  // Reset display
+  // ===== Guard elemen =====
+  if (!loading || !cardAbsensi || !cardDokumentasi || !cardEmpty) return;
+  
+  // ===== Reset display =====
   loading.style.display = 'block';
   cardAbsensi.style.display = 'none';
   cardDokumentasi.style.display = 'none';
   cardEmpty.style.display = 'none';
   
-  const result = await callAPI('getAbsensiLinks');
+  // ===== Pakai cache (5 menit) kecuali forceRefresh =====
+  const result = forceRefresh
+    ? await callAPI('getAbsensiLinks')
+    : await callAPIWithCache('getAbsensiLinks', {}, 5 * 60 * 1000);
   
   loading.style.display = 'none';
   
@@ -78,7 +91,7 @@ async function loadLinks(forceRefresh = false) {
     return;
   }
   
-  const data = result.data;
+  const data = result.data || {};
   const linkAbsensi = data.link_absensi || '';
   const linkDokumentasi = data.link_dokumentasi || '';
   
@@ -90,19 +103,40 @@ async function loadLinks(forceRefresh = false) {
   
   // ===== CARD ABSENSI =====
   if (linkAbsensi) {
-    document.getElementById('link-absensi-url').textContent = linkAbsensi;
-    document.getElementById('link-absensi-url').href = linkAbsensi;
-    document.getElementById('btn-buka-absensi').href = linkAbsensi;
+    const elLink = document.getElementById('link-absensi-url');
+    const elBtn = document.getElementById('btn-buka-absensi');
+    
+    if (elLink) {
+      elLink.textContent = linkAbsensi;
+      elLink.href = linkAbsensi;
+    }
+    if (elBtn) elBtn.href = linkAbsensi;
+    
     cardAbsensi.style.display = 'block';
   }
   
   // ===== CARD DOKUMENTASI =====
   if (linkDokumentasi) {
-    document.getElementById('link-dokumentasi-url').textContent = linkDokumentasi;
-    document.getElementById('link-dokumentasi-url').href = linkDokumentasi;
-    document.getElementById('btn-buka-dokumentasi').href = linkDokumentasi;
+    const elLink = document.getElementById('link-dokumentasi-url');
+    const elBtn = document.getElementById('btn-buka-dokumentasi');
+    
+    if (elLink) {
+      elLink.textContent = linkDokumentasi;
+      elLink.href = linkDokumentasi;
+    }
+    if (elBtn) elBtn.href = linkDokumentasi;
+    
     cardDokumentasi.style.display = 'block';
   }
+}
+
+// ============================================
+// REFRESH — dipanggil dari tombol Refresh
+// ============================================
+async function refreshData() {
+  clearAPICache();
+  await loadLinks(true);
+  showToast('✅ Data berhasil di-refresh');
 }
 
 function logout() {

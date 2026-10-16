@@ -1,5 +1,6 @@
 // ============================================
 // verifikasi.js - Logic halaman verifikator
+// + clearAPICache setelah verify/reject
 // ============================================
 
 let allDocs = [];
@@ -34,23 +35,42 @@ function renderUserInfo() {
     .toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   
-  if (currentUser.role === 'administrator') {
-    const el = document.getElementById('sidebar-manage-user');
+  // ===== Menu untuk VERIFIKATOR =====
+  if (currentUser.role === 'verifikator' || currentUser.role === 'administrator') {
+    const el = document.getElementById('sidebar-verifikasi');
     if (el) el.style.display = 'flex';
+  }
+  
+  // ===== Menu khusus ADMIN =====
+  if (currentUser.role === 'administrator') {
+    const elManage = document.getElementById('sidebar-manage-user');
+    if (elManage) elManage.style.display = 'flex';
+    
     const elAudit = document.getElementById('sidebar-audit');
     if (elAudit) elAudit.style.display = 'flex';
+    
     const elAbsensi = document.getElementById('sidebar-absensi');
     if (elAbsensi) elAbsensi.style.display = 'flex';
-    const elAbsensi = document.getElementById('sidebar-absensi');
-    if (elAbsensi) elAbsensi.style.display = 'flex';
+    
+    const elRtl = document.getElementById('sidebar-manage-rtl');
+    if (elRtl) elRtl.style.display = 'flex';
   }
+  
+  // ===== Menu Rekap (admin & auditor) =====
+  showMenuRekap();
+  
+  // ===== Sembunyikan section kosong =====
+  hideEmptySections();
 }
 
 async function loadDocs(forceRefresh = false) {
   const container = document.getElementById('table-container');
   container.innerHTML = '<div class="loading"><span class="spinner"></span> Memuat data...</div>';
   
-  const result = await callAPI('getDocsForVerification');
+  // ===== Pakai forceRefresh untuk hindari cache =====
+  const result = forceRefresh 
+    ? await callAPI('getDocsForVerification')
+    : await callAPIWithCache('getDocsForVerification', {}, 60 * 1000);   // cache 1 menit
   
   if (!result.success) {
     container.innerHTML = `<div class="alert alert-error">❌ ${escapeHtml(result.message)}</div>`;
@@ -242,6 +262,7 @@ async function submitVerify() {
   btn.textContent = '✅ Verifikasi';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     closeModal();
     await loadDocs(true);
@@ -275,6 +296,7 @@ async function submitReject() {
   btn.textContent = '❌ Tolak';
   
   if (result.success) {
+    clearAPICache();   // ← TAMBAH
     showToast('✅ ' + result.message);
     closeModal();
     await loadDocs(true);

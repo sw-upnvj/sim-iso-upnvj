@@ -40,10 +40,10 @@
         Audit
       </a>
       
-      <a href="absensi.html" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Absensi</a>
+      <a href="absensi.html" id="sidebar-absensi" style="display:none;"><span class="sidebar-menu-icon">📋</span> Presensi</a>
       
       <div class="sidebar-section-title" style="margin-top:12px;">Administrasi</div>
-      <a href="rekap.html">
+      <a href="rekap.html" id="sidebar-rekap" style="display:none;">
         <span class="sidebar-menu-icon">📊</span>
         Rekap
       </a>
@@ -186,6 +186,80 @@
           <div class="stat-card-value" id="stat-progress">0%</div>
           <div class="stat-card-label">Progress</div>
         </div>
+      </div>
+
+            <!-- ===== Stat Cards Kategori (Prodi, Satker, Lab) ===== -->
+      <div class="stats-grid" id="stat-category-section" style="grid-template-columns:repeat(3, 1fr);margin-top:20px;">
+        
+        <!-- Card Prodi -->
+        <div class="stat-card" style="background:linear-gradient(135deg,#ECFDF5 0%,#F0FDF4 100%);border-left:4px solid #059669;">
+          <div class="stat-card-header">
+            <div class="stat-card-icon green">🎓</div>
+            <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;">Program Studi</div>
+          </div>
+          <div class="stat-card-value" id="stat-prodi-total">-</div>
+          <div class="stat-card-label">Total Prodi</div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #A7F3D0;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+              <span style="color:#065F46;font-weight:600;">📤 Tersedia:</span>
+              <span id="stat-prodi-tersedia" style="color:#059669;font-weight:700;">-</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;">
+              <span style="color:#065F46;font-weight:600;">✅ Verified:</span>
+              <span id="stat-prodi-verified" style="color:#059669;font-weight:700;">-</span>
+            </div>
+            <div class="mini-progress-bar" style="height:6px;">
+              <div class="mini-progress-fill excellent" id="stat-prodi-progress" style="width:0%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Card Satker -->
+        <div class="stat-card" style="background:linear-gradient(135deg,#FEF3C7 0%,#FFFBEB 100%);border-left:4px solid #D97706;">
+          <div class="stat-card-header">
+            <div class="stat-card-icon amber">🏛️</div>
+            <div style="font-size:11px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px;">Satuan Kerja</div>
+          </div>
+          <div class="stat-card-value" id="stat-satker-total">-</div>
+          <div class="stat-card-label">Total Satker</div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #FDE68A;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+              <span style="color:#92400E;font-weight:600;">📤 Tersedia:</span>
+              <span id="stat-satker-tersedia" style="color:#D97706;font-weight:700;">-</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;">
+              <span style="color:#92400E;font-weight:600;">✅ Verified:</span>
+              <span id="stat-satker-verified" style="color:#D97706;font-weight:700;">-</span>
+            </div>
+            <div class="mini-progress-bar" style="height:6px;">
+              <div class="mini-progress-fill good" id="stat-satker-progress" style="width:0%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Card Lab -->
+        <div class="stat-card" style="background:linear-gradient(135deg,#DBEAFE 0%,#EFF6FF 100%);border-left:4px solid #2563EB;">
+          <div class="stat-card-header">
+            <div class="stat-card-icon mint">🔬</div>
+            <div style="font-size:11px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:0.5px;">Laboratorium</div>
+          </div>
+          <div class="stat-card-value" id="stat-lab-total">-</div>
+          <div class="stat-card-label">Total Lab</div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #BFDBFE;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+              <span style="color:#1E40AF;font-weight:600;">📤 Tersedia:</span>
+              <span id="stat-lab-tersedia" style="color:#2563EB;font-weight:700;">-</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;">
+              <span style="color:#1E40AF;font-weight:600;">✅ Verified:</span>
+              <span id="stat-lab-verified" style="color:#2563EB;font-weight:700;">-</span>
+            </div>
+            <div class="mini-progress-bar" style="height:6px;">
+              <div class="mini-progress-fill excellent" id="stat-lab-progress" style="width:0%;"></div>
+            </div>
+          </div>
+        </div>
+        
       </div>
       
       <!-- Progress Bar -->

@@ -1,18 +1,17 @@
 // ============================================
-// dashboard.js - Logic halaman dashboard auditee
-// + Optimasi: cache getRekap, load paralel, skip chart auditee
+// dashboard.js - Logic halaman dashboard
+// + TERSEDIA = globalTersedia (submitted + rejected, parent + sub)
 // ============================================
 
 let allDocs = [];
 let currentUser = null;
 let selectedSubsatker = '';
-let cachedRekap = null;   // ← cache global untuk getRekap
+let cachedRekap = null;
 
 window.addEventListener('load', async () => {
   const session = requireLogin();
   if (!session) return;
   
-  // ===== Guard: cek user ada =====
   if (!session.user || !session.user.nama) {
     console.warn('Session user kosong, redirect ke login');
     clearSession();
@@ -34,7 +33,6 @@ window.addEventListener('load', async () => {
     loadDocs()
   ];
   
-  // Chart hanya untuk admin/verif/auditor
   if (currentUser.role !== 'auditee') {
     tasks.push(loadCharts());
   } else {
@@ -44,7 +42,6 @@ window.addEventListener('load', async () => {
   
   await Promise.all(tasks);
   
-  // ===== Load RTL & Audit info (khusus auditee) =====
   if (currentUser.role === 'auditee') {
     await Promise.all([
       loadRtlInfo(),
@@ -76,13 +73,11 @@ function renderUserInfo() {
       'Pilih subsatker untuk melihat dan mengelola dokumen';
   }
   
-  // ===== Menu Verifikasi =====
   if (currentUser.role === 'verifikator' || currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-verifikasi');
     if (el) el.style.display = 'flex';
   }
   
-  // ===== Menu Audit & Presensi =====
   if (currentUser.role === 'auditor' || currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-audit');
     if (el) el.style.display = 'flex';
@@ -90,31 +85,24 @@ function renderUserInfo() {
     if (elAbsensi) elAbsensi.style.display = 'flex';
   }
   
-  // ===== Menu khusus Administrator =====
   if (currentUser.role === 'administrator') {
     const el = document.getElementById('sidebar-manage-user');
     if (el) el.style.display = 'flex';
-    
     const elRtl = document.getElementById('sidebar-manage-rtl');
     if (elRtl) elRtl.style.display = 'flex';
   }
   
-  // ===== Menu Rekap: tampil untuk administrator & auditor =====
   if (currentUser.role === 'administrator' || currentUser.role === 'auditor') {
     const elRekap = document.getElementById('sidebar-rekap');
     if (elRekap) elRekap.style.display = 'flex';
   }
   
-  // ===== Sembunyikan card kategori kalau role = auditee =====
   if (currentUser.role === 'auditee') {
     const kategoriSection = document.getElementById('stat-category-section');
     if (kategoriSection) kategoriSection.style.display = 'none';
   }
   
-  // ===== Banner Pintasan (Verifikator & Auditor) =====
   renderBannerPintasan();
-  
-  // ===== Sembunyikan section kosong =====
   hideEmptySections();
 }
 
@@ -225,7 +213,6 @@ async function setupSubsatkerFilter() {
   if (!filterEl) return;
   filterEl.style.display = 'block';
   
-  // ===== Pakai cache (5 menit) =====
   const result = await callAPIWithCache('getSubsatkerList', {}, 5 * 60 * 1000);
   if (!result.success) return;
   
@@ -254,21 +241,33 @@ async function loadDocs() {
                           currentUser.role === 'auditor';
   
   if (isAdminOrStaff && !selectedSubsatker) {
-    // ===== Pakai cachedRekap kalau ada =====
     const aggregateResult = cachedRekap || await callAPI('getRekap');
     
     if (aggregateResult.success && aggregateResult.data) {
       let totalDocs = 0;
       let totalVerified = 0;
-      let totalTersedia = 0;
       
       aggregateResult.data.forEach(item => {
         totalDocs += item.total || 0;
         totalVerified += item.verified || 0;
-        totalTersedia += item.tersedia || 0;
       });
       
-      const totalKosong = totalDocs - totalTersedia;
+      // ============================================
+      // TERSEDIA = globalTersedia dari backend
+      // (submitted + rejected, parent + sub-item)
+      // SAMA dengan Verifikasi MENUNGGU
+      // ============================================
+      let totalTersedia = 0;
+      if (aggregateResult.globalTersedia !== undefined) {
+        totalTersedia = aggregateResult.globalTersedia;
+      } else {
+        // Fallback: pakai item.tersedia (parent only)
+        aggregateResult.data.forEach(item => {
+          totalTersedia += item.tersedia || 0;
+        });
+      }
+      
+      const totalKosong = Math.max(0, totalDocs - totalTersedia);
       const totalPercent = totalDocs > 0 ? Math.round((totalVerified / totalDocs) * 100) : 0;
       
       document.getElementById('stat-total').textContent = totalDocs;
@@ -357,7 +356,7 @@ async function loadAuditSummary(subsatker) {
 }
 
 // ============================================
-// UPDATE STATS — pakai getParentStatus()
+// UPDATE STATS — per subsatker (auditee)
 // ============================================
 function updateStats(docs) {
   const total = docs.length;
@@ -391,7 +390,7 @@ function updateStats(docs) {
 }
 
 // ============================================
-// UPDATE CARD KATEGORI (Prodi / Satker / Lab)
+// UPDATE CARD KATEGORI
 // ============================================
 function updateKategoriCard(kategori, items) {
   const totalSatker = items.length;
@@ -804,14 +803,13 @@ async function saveLink(docID, link) {
 }
 
 // ============================================
-// CHART — Ringkasan Kesiapan ISO
+// CHART
 // ============================================
 let chartBarInstance = null;
 let chartDonutInstance = null;
 let currentChartType = 'bar';
 
 async function loadCharts() {
-  // ===== Pakai cachedRekap kalau ada =====
   const result = cachedRekap || await callAPI('getRekap');
   
   if (!result.success || !result.data) {
